@@ -10,12 +10,60 @@ All messages in this protocol support several base types:
 
 All messages begin with a 1-byte integer Operation ID. Each message type specified below has a unique Operation ID. The same Operation ID is used for messages from the client to the server (actions/requests) and messages from the server to the client (responses), though these message types will have different formats. The formats will be specified as "request" or "response" formats under the header for the applicable Operation ID.
 
+### Versioning
+
+If an operation's message specification is updated, the updated version of the operation must be assigned a new ID.
+
 ## Look Up Account (Operation ID 1)
 
 ### Request
 
-todo
+- Operation ID (1 byte integer)
+- Username Length (1 byte integer)
+- Username (String)
 
 ### Response
 
-todo
+- Operation ID (1 byte integer)
+- Account Exists (Boolean/1 byte integer)
+  - 0: no account exists
+  - 1: account exists
+
+The remaining fields will be sent only if the account exists:
+
+- Bcrypt Cost (1 byte integer)
+- Bcrypt Salt (16 bytes)
+
+## Log In (Operation ID 2)
+
+### Request
+
+- Operation ID (1 byte integer)
+- Username Length (1 byte integer)
+- Username (String)
+- Password Hash Length (1 byte integer)
+- Password Hash (String - bcrypt password hash)
+
+### Response
+
+- Operation ID (1 byte integer)
+- Success (Boolean/1 byte integer)
+
+## Create Account (Operation ID 3)
+
+_Note: when creating an account a user's socket will automatically be associated with the newly created account. No subsequent login is required._
+
+### Request
+
+- Operation ID (1 byte integer)
+- Username Length (1 byte integer)
+- Username (String)
+- Password Hash Length (1 byte integer)
+- Password Hash (String - bcrypt password hash)
+
+_Note: The cost and salt will be determined by the server based on the password hash, which is a string in bcrypt format and thus contains these values._
+
+### Response
+
+- Operation ID (1 byte integer)
+- Success (Boolean/1 byte integer)

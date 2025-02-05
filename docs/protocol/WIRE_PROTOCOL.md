@@ -67,3 +67,24 @@ _Note: The cost and salt will be determined by the server based on the password 
 
 - Operation ID (1 byte integer)
 - Success (Boolean/1 byte integer)
+
+## List accounts (Operation ID 4)
+
+### Request
+
+- Operation ID (1 byte integer)
+- Maximum number of accounts to list (1 byte integer)
+- Offset account ID (4 byte integer)
+- Filter text length (1 byte integer)
+  - Set to 0 when no filtering is requested.
+- Filter text (string)
+  - Filters the returned accounts to only those whose usernames match the format `*[text]*`
+
+### Response
+
+- Operation ID (1 byte integer)
+- Number of accounts (1 byte integer)
+- For each account:
+  - Account ID (4 byte integer)
+  - Username length (1 byte integer)
+  - Username (String)

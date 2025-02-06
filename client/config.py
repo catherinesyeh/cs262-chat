@@ -15,7 +15,8 @@ def get_config():
     host = config["SERVER_HOST"]
     port = config["SERVER_PORT"]
     max_msg = config["MAX_MSG_TO_DISPLAY"]
+    max_users = config["MAX_USERS_TO_DISPLAY"]
 
-    return {"host": host, "port": port, "max_msg": max_msg}
+    return {"host": host, "port": port, "max_msg": max_msg, "max_users": max_users}
 
 

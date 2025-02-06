@@ -14,7 +14,31 @@ This project should provide a fully functional chat system built over raw socket
 poetry install
 ```
 
+## Server
+
+## Client
+
+1. Navigate to [client/](client/) folder:
+
+```
+cd client
+```
+
+2. Start client:
+
+```
+poetry run python client.py
+```
+
+- To test without server, add the `-test` flag:
+
+```
+poetry run python client.py -test
+```
+
 ## Testing
+
+**Note: under construction right now**
 
 1. Navigate into [tests](tests) folder:
 

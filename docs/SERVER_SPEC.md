@@ -16,7 +16,17 @@ Requests can be sent in either JSON format or the custom wire protocol. Any requ
 
 All entities (accounts and messages) are assigned a unique integer ID, which will always be assigned in ascending order. Entities are always returned to the client ordered by ID. The highest ID received by the client in one request can then be used as the "offset ID" in the next request - the server will then return only entities with a greater ID.
 
+Pagination is currently only used for listing accounts, as messages are implicitly paginated by their delivered status, as noted below.
+
 ## Maximum Lengths
 
-Usernames: 256 characters (2^8)
-Messages: 65536 characters (2^16)
+Usernames: 255 characters (2^8-1)
+Messages: 65535 characters (2^16-1)
+
+## Message delivery
+
+Only the delivery of new/unread messages is supported by the protocol, but all messages are stored. Once a message has been delivered, it is marked as read and will not be redelivered.
+
+## Account Deletion
+
+Deletion of an account marks the account as deleted. The username will remain claimed in the database. The user's hashed password will be deleted, as will all messages received by that user, including unread messages. Messages sent by the user will remain sent.

@@ -81,8 +81,6 @@ class ChatClient:
             self.thread = threading.Thread(target=self.receive_messages, daemon=True)
             self.thread.start()
 
-            time.sleep(0.5) # Wait for the thread to start
-
             if not self.thread.is_alive():
                 print("[ERROR] Could not start thread to listen for messages")
                 self.close()

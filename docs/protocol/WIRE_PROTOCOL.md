@@ -53,6 +53,8 @@ The remaining fields will be sent only if the account exists:
 - Operation ID (1 byte integer)
 - Success (Boolean/1 byte integer)
   - False means that the username/password pair was invalid.
+- Unread Message Count (2 byte integer)
+  - Only sent if success was 1!
 
 ## Create Account (Operation ID 3)
 

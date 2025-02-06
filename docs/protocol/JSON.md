@@ -76,7 +76,11 @@ If an operation's message specification is updated, the updated version of the o
 
 ### Response
 
-Empty payload on success.
+```json
+{
+  "unread_messages": 300
+}
+```
 
 ## Create Account (Operation ID 3)
 

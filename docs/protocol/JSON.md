@@ -4,7 +4,7 @@
 
 All messages should be sent as standard-form JSON. Messages must match a defined `operation`. Each `operation` defines its own `payload` for requests and responses. For all operations defined below, the JSON format given is for the `payload` only - it must be wrapped in the expected standard format specified below. The `payload` is optional and may be omitted in some cases.
 
-Some fields have maximum lengths. See docs/SERVER_SPEC.md. Integers other than account/message IDs must be less than or equal to 255. All string fields with a maximum length not specified in that file must not be over 255 characters.
+Some fields have maximum lengths. See [docs/SERVER_SPEC.md](/docs/SERVER_SPEC.md). Integers other than account/message IDs must be less than or equal to 255. All string fields with a maximum length not specified in that file must not be over 255 characters.
 
 The JSON body of a **request** message should always be the following:
 

@@ -1,0 +1,9 @@
+# June Moretz Engineering Notebook
+
+## February 5, 2025
+
+(Goals: Protocol Design/Documentation)
+
+I met with Catherine today after class to begin work on the design exercise. We decided to move forward by splitting the work between us such that we can more easily move forward independently and take advantage of all the time available to us as wel as possible. We also discussed language choices. I will be taking the lead on protocol design and server side development for now, while she will be working primarily on the client, at least until we next meet.
+
+I've designed an initial wire protocol, as well as a JSON protocol. My plan is to build the server in Java, and to build a translation layer that can convert either wire protocol format into an internal representation. My largest concern with my wire protocol design is that lengths of messages are not fixed (or, for that matter, specified anywhere in the message). Whether or not a message has been fully received can be deduced at any time, but this may add some level of complexity. If this causes serious issues, we may end up having to change some elements of the design - however, given the existence of a JSON protocol (where a length attribute would be unconventional and the end of the message can similarly only be deduced from context), I'm not certain how useful it would really be to change this. The choice of raw sockets is one I'm somewhat unaccustomed to, as I'm used to higher level protocols (RPC-like systems or HTTP), but I'm confident I'll figure it out quickly once we start on implementation. For now, we felt it would be easiest to move forward if we both have some shared documentation to work from. This protocol design (and some specifications for the system) should provide the baseline for coordinating server and client development, and we'll refine as needed from there!

@@ -1,6 +1,8 @@
-# cs262-wire-protocol
+# cs262-chat
 
-Design Exercise 1
+CS262 Design Exercise 1: Chat Server
+
+This project should provide a fully functional chat system built over raw sockets.
 
 ## Setup
 
@@ -25,3 +27,7 @@ cd tests
 ```
 poetry run pytest
 ```
+
+## Documentation
+
+More comprehensive internal documentation (including engineering notebooks) is in the [docs/](docs/) folder.

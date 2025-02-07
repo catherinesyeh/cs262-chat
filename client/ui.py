@@ -129,7 +129,7 @@ class ChatUI:
         settings_frame = tk.Frame(self.root, relief=tk.RAISED, bd=2, padx=5, pady=5)
         settings_frame.grid(row=0, column=0, columnspan=2, sticky="we")
 
-        tk.Button(settings_frame, text="Disconnect", fg="red", command=self.disconnect).pack(side=tk.LEFT, padx=5, pady=5)
+        tk.Button(settings_frame, text="Log out", fg="red", command=self.disconnect).pack(side=tk.LEFT, padx=5, pady=5)
         tk.Button(settings_frame, text="Delete Account", fg="red", command=self.confirm_delete_account).pack(side=tk.RIGHT, padx=5, pady=5)
 
         # Container to hold both sidebar and chat frame

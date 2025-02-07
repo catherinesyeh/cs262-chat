@@ -85,7 +85,7 @@ class ChatClient:
     # Main operations
     def lookup_account(self, username):
         """
-        OPERATION 1: Send a lookup account message to the server.
+        OPERATION 1: Send a lookup account message to the server (LOOKUP_USER).
 
         :param username: Username to lookup
         :return: Tuple of bcrypt cost and salt if account exists, None otherwise
@@ -94,7 +94,7 @@ class ChatClient:
            return self._log_error("Not connected to server")
             
         if self.use_json_protocol: # Use JSON protocol for lookup
-            response = self._send_json_request("1", {"username": username}, error_message="Account lookup failed")
+            response = self._send_json_request("LOOKUP_USER", {"username": username}, error_message="Account lookup failed")
             
             # Extract cost and salt from JSON response if account exists
             payload = response["payload"]
@@ -119,7 +119,7 @@ class ChatClient:
     
     def login(self, username, password):
         """
-        OPERATION 2: Send a login message to the server.
+        OPERATION 2: Send a login message to the server (LOGIN).
 
         :param username: Username to login
         :param password: Password to login
@@ -139,7 +139,7 @@ class ChatClient:
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
 
         if self.use_json_protocol: # Use JSON protocol for login
-            response = self._send_json_request("2", {"username": username, "password_hash": hashed_password}, error_message="Invalid credentials")
+            response = self._send_json_request("LOGIN", {"username": username, "password_hash": hashed_password}, error_message="Invalid credentials")
             payload = response["payload"]
             return True, payload["unread_count"]
 
@@ -158,7 +158,7 @@ class ChatClient:
     
     def create_account(self, username, password):
         """
-        OPERATION 3: Create a new account.
+        OPERATION 3: Create a new account (CREATE_ACCOUNT).
 
         :param username: Username to create
         :param password: Password to create
@@ -176,7 +176,7 @@ class ChatClient:
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
 
         if self.use_json_protocol: # Use JSON protocol for account creation
-            response = self._send_json_request("3", {"username": username, "password_hash": hashed_password}, error_message="Account creation failed")
+            response = self._send_json_request("CREATE_ACCOUNT", {"username": username, "password_hash": hashed_password}, error_message="Account creation failed")
             return True # Account created successfully
 
         # Else, use custom protocol
@@ -194,7 +194,7 @@ class ChatClient:
     
     def list_accounts(self, offset_id=0, filter_text=""):
         """
-        OPERATION 4: Request a list of accounts from the server.
+        OPERATION 4: Request a list of accounts from the server (LIST_ACCOUNTS).
 
         :param offset_id: Offset ID for pagination
         :param filter_text: Filter text to search for
@@ -204,7 +204,7 @@ class ChatClient:
             return self._log_error("Not connected to server")
         
         if self.use_json_protocol: # Use JSON protocol for listing accounts
-            response = self._send_json_request("4", {"maximum_number": self.max_users, "offset_id": offset_id, "filter_text": filter_text}, error_message="Could not retrieve accounts")
+            response = self._send_json_request("LIST_ACCOUNTS", {"maximum_number": self.max_users, "offset_id": offset_id, "filter_text": filter_text}, error_message="Could not retrieve accounts")
             account_data = response["payload"]["accounts"]
             accounts = [(account["account_id"], account["username"]) for account in account_data]
             print(f"[ACCOUNTS] Retrieved {len(accounts)} accounts")
@@ -233,7 +233,7 @@ class ChatClient:
     
     def send_message(self, recipient, message):
         """
-        OPERATION 5: Send a message to the server.
+        OPERATION 5: Send a message to the server (SEND_MESSAGE).
 
         :param recipient: Recipient of the message
         :param message: Message to send
@@ -243,7 +243,7 @@ class ChatClient:
             return self._log_error("Not connected to server", False)
         
         if self.use_json_protocol: # Use JSON protocol for sending messages
-            response = self._send_json_request("5", {"recipient": recipient, "message": message}, error_message="Message failed to send")
+            response = self._send_json_request("SEND_MESSAGE", {"recipient": recipient, "message": message}, error_message="Message failed to send")
             message_id = response["payload"]["message_id"]
             print(f"[MESSAGE SENT] Message ID: {message_id}")
             return True, message_id # Return the message ID
@@ -266,7 +266,7 @@ class ChatClient:
 
     def request_messages(self):
         """
-        OPERATION 6: Request unread messages from the server.
+        OPERATION 6: Request unread messages from the server (REQUEST_MESSAGES).
 
         :return: List of messages
         """
@@ -274,7 +274,7 @@ class ChatClient:
             return self._log_error("Not connected to server")
         
         if self.use_json_protocol: # Use JSON protocol for requesting messages
-            response = self._send_json_request("6", {"maximum_number": self.max_msg}, error_message="Could not retrieve messages")
+            response = self._send_json_request("REQUEST_MESSAGES", {"maximum_number": self.max_msg}, error_message="Could not retrieve messages")
             message_data = response["payload"]["messages"]
             messages = [(message["message_id"], message["sender"], message["message"]) for message in message_data]
             print(f"[MESSAGES] Retrieved {len(messages)} messages")
@@ -307,7 +307,7 @@ class ChatClient:
     
     def delete_message(self, message_ids):
         """
-        OPERATION 7: Delete messages from the server.
+        OPERATION 7: Delete messages from the server (DELETE_MESSAGES).
 
         :param message_ids: List of message IDs to delete
         :return: True if messages are deleted successfully, False otherwise
@@ -320,7 +320,7 @@ class ChatClient:
             return self._log_error("No messages to delete", False)
         
         if self.use_json_protocol: # Use JSON protocol for deleting messages
-            response = self._send_json_request("7", {"message_ids": message_ids}, error_message="Message deletion failed")
+            response = self._send_json_request("DELETE_MESSAGES", {"message_ids": message_ids}, error_message="Message deletion failed")
             print(f"[MESSAGE DELETED] {num_messages} messages deleted successfully")
             return True
         
@@ -342,7 +342,7 @@ class ChatClient:
     
     def delete_account(self):
         """
-        OPERATION 8: Delete the account from the server.
+        OPERATION 8: Delete the account from the server (DELETE_ACCOUNT).
 
         :return: True if account is deleted successfully, False otherwise
         """
@@ -350,7 +350,7 @@ class ChatClient:
             return self._log_error("Not connected to server", False)
         
         if self.use_json_protocol: # Use JSON protocol for deleting account
-            self._send_json_request("8", error_message="Account deletion failed")
+            self._send_json_request("DELETE_ACCOUNT", error_message="Account deletion failed")
             print("[ACCOUNT DELETED] Account deleted successfully")
             self.close()
             return True

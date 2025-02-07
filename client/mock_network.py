@@ -3,11 +3,12 @@ import sys
 class MockChatClient:
     """Mock ChatClient for UI testing without a server."""
 
-    def __init__(self, host, port, max_msg, max_users):
+    def __init__(self, host, port, max_msg, max_users, use_json_protocol):
         self.host = host
         self.port = port
         self.max_msg = max_msg
         self.max_users = max_users
+        self.use_json_protocol = use_json_protocol
         self.existing_users = {
             "alice": "hashedpassword123",
             "bob": "hashedpassword456",

@@ -3,8 +3,6 @@ package edu.harvard;
 import java.io.IOException;
 import java.net.Socket;
 
-import javax.imageio.IIOException;
-
 import edu.harvard.Data.JSONProtocol;
 import edu.harvard.Data.Protocol;
 import edu.harvard.Data.WireProtocol;

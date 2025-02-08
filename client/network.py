@@ -30,6 +30,7 @@ class ChatClient:
         self.max_users = max_users # Maximum number of users to display
         self.message_callback = None # Callback function to handle received messages
         print("[INITIALIZED] Client initialized")
+        self.connect()
     
     def connect(self):
         """ 
@@ -378,7 +379,7 @@ class ChatClient:
         if not self.use_json_protocol: # Custom protocol is handled separately
             return None
     
-        request = json.dumps({"operation": operation, "payload": payload or {}}).encode("utf-8")
+        request = (json.dumps({"operation": operation, "payload": payload or {}}) + '\n').encode("utf-8")
         self.socket.send(request)
         response = self.socket.recv(4096).decode("utf-8")
         parsed_response = json.loads(response) # Parse the JSON response

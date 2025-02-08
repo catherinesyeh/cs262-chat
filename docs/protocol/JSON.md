@@ -6,6 +6,8 @@ All messages should be sent as standard-form JSON. Messages must match a defined
 
 Some fields have maximum lengths. See [docs/SERVER_SPEC.md](/docs/SERVER_SPEC.md). Integers other than account/message IDs must be less than or equal to 255. All string fields with a maximum length not specified in that file must not be over 255 characters.
 
+All messages must be terminated by a newline (`\n`).
+
 The JSON body of a **request** message should always be the following:
 
 ```json
@@ -63,7 +65,7 @@ If an operation's message specification is updated, the updated version of the o
 }
 ```
 
-## Log In (Operation ID 2)
+## Log In (Operation ID LOGIN)
 
 ### Request
 
@@ -82,7 +84,7 @@ If an operation's message specification is updated, the updated version of the o
 }
 ```
 
-## Create Account (Operation ID 3)
+## Create Account (Operation ID CREATE_ACCOUNT)
 
 _Note: when creating an account a user's socket will automatically be associated with the newly created account. No subsequent login is required._
 
@@ -101,7 +103,7 @@ _Note: The cost and salt will be determined by the server based on the password 
 
 Empty payload on success.
 
-## List accounts (Operation ID 4)
+## List accounts (Operation ID LIST_ACCOUNTS)
 
 ### Request
 
@@ -127,7 +129,7 @@ Empty payload on success.
 }
 ```
 
-## Send message (Operation ID 5)
+## Send message (Operation ID SEND_MESSAGE)
 
 ### Request
 
@@ -146,7 +148,7 @@ Empty payload on success.
 }
 ```
 
-## Request new messages (Operation ID 6)
+## Request new messages (Operation ID REQUEST_MESSAGES)
 
 ### Request
 
@@ -171,7 +173,7 @@ Empty payload on success.
 }
 ```
 
-## Delete message(s) (Operation ID 7)
+## Delete message(s) (Operation ID DELETE_MESSAGES)
 
 ### Request
 
@@ -185,7 +187,7 @@ Empty payload on success.
 
 Empty payload on success.
 
-## Delete account (Operation ID 8)
+## Delete account (Operation ID DELETE_ACCOUNT)
 
 ### Request
 

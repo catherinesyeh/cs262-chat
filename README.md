@@ -16,6 +16,12 @@ poetry install
 
 ## Server
 
+The server is a Java application built using Gradle. On Linux, run `./gradlew run` from the `server` directory to run the server. (On Windows, this can be replaced with `./gradlew.bat`.)
+
+### Server Testing
+
+Run `./gradlew test` from the `server` directory.
+
 ## Client
 
 1. Navigate to [client/](client/) folder:
@@ -36,7 +42,7 @@ poetry run python client.py
 poetry run python client.py -test
 ```
 
-## Testing
+### Client Testing
 
 **Note: under construction right now**
 

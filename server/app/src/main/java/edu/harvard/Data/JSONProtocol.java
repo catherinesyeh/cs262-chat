@@ -16,10 +16,16 @@ public class JSONProtocol implements Protocol {
           new InputStreamReader(
               inputStream));
       String inputLine = "{".concat(in.readLine());
-      JSONObject obj = new JSONObject(inputLine);
-      Operation operation = Operation.valueOf(obj.getString("operation"));
-      if (operation == null || operation.equals(Operation.UNKNOWN)) {
-        throw new ParseException("Invalid operation code.");
+      JSONObject obj = null;
+      Operation operation;
+      try {
+        obj = new JSONObject(inputLine);
+        operation = Operation.valueOf(obj.getString("operation"));
+        if (operation == null || operation.equals(Operation.UNKNOWN)) {
+          throw new ParseException("Invalid operation code.");
+        }
+      } catch (JSONException ex) {
+        throw new ParseException("Could not parse operation code.");
       }
       JSONObject payload = null;
       try {
@@ -48,7 +54,11 @@ public class JSONProtocol implements Protocol {
             Data.ListAccountsRequest listPayload = new Data.ListAccountsRequest();
             listPayload.maximum_number = payload.getInt("maximum_number");
             listPayload.offset_account_id = payload.getInt("offset_account_id");
-            listPayload.filter_text = payload.getString("filter_text");
+            try {
+              listPayload.filter_text = payload.getString("filter_text");
+            } catch (JSONException ex) {
+              listPayload.filter_text = "";
+            }
             parsedRequest.payload = listPayload;
             return parsedRequest;
           case SEND_MESSAGE:
@@ -61,7 +71,7 @@ public class JSONProtocol implements Protocol {
             parsedRequest.payload = payload.getInt("maximum_number");
             return parsedRequest;
           case DELETE_MESSAGES:
-            parsedRequest.payload = payload.getJSONArray("messages").toList();
+            parsedRequest.payload = payload.getJSONArray("message_ids").toList();
             return parsedRequest;
           default:
             // DELETE_ACCOUNT or others with no payload to parse

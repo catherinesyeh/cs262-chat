@@ -18,6 +18,7 @@ public class AppThread extends Thread {
   }
 
   public void run() {
+    System.out.println("New connection from " + socket.getInetAddress().toString());
     while (true) {
       int firstByte = 0;
       Protocol protocol = null;
@@ -37,10 +38,13 @@ public class AppThread extends Thread {
 
         try {
           Request request = protocol.parseRequest(firstByte, socket.getInputStream());
+          System.out.println(request.operation);
+          System.out.println(request.payload);
         } catch (Protocol.ParseException e) {
           // todo handle
         }
       } catch (IOException e) {
+        System.err.println("Unexpected I/O error in main thread:");
         // TODO return error message
         if (protocol != null) {
           protocol.generateUnexpectedFailureResponse(Operation.codeToOperation(firstByte),

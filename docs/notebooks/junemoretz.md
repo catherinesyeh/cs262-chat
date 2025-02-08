@@ -28,3 +28,17 @@ This wireframed test server seems to be in fairly good shape now. A few decision
 - The protocols are implemented through separate implementations of a Protocol interface. These should be called with an input stream, and will then create a standard-form Request class, which the server can handle consistently regardless of the input format. The Protocol interface will then also have methods to generate all of the needed response types. This means that the logic and the protocol layer can ideally be completely separated.
 - I also made a Data class. This contains internal data-only classes, as well as data-only classes to contain multiple fields for request/response messages that need these - these classes will be produced or consumed by the Protocol methods. Longer term, I want to have a Datastore class that will handle database operations - this will just be needed by the server logic, and not by the protocol layer, where my current focus is, so I'll work on it later.
 - I'll need to add more tests once I start building more of the protocol and logic functionality. I want to have a wide spectrum of tests, from unit tests to more end-to-end tests.
+
+## February 8, 2025
+
+(Goals: Data Parsing)
+
+I'm continuing to work on the wireframed data parsing system I built yesterday. A lot of the data classes are plain Java objects where all the fields are public. This might not be ideal coding practice, but in a small application with sufficient testing, it doesn't concern me too much (and makes development substantially faster - we don't have unlimited time!)
+
+I've already finished building the parser for JSON request messages. It was quite easy with the base I had in place from yesterday, and seems to be working too! I've also written some helpers to assist in the wire protocol parser, which should make it just as quick to finish. Really not too bad once I've established the general flow for "how should the protocol translator work" - just a matter of filling in the holes for each message type until it matches the spec!
+
+Once this is done, I'll probably start framing out the actual logic and database system for the server. It'll be easier to write the response serializers for both protocol layers once I have an actual source for the response messages. After that's done I'll go back and fill in a lot of the tests. I'd like to unit-test the protocol and logic layers fairly thoroughly - the logic of the main app thread and socket system can be tested better by end-to-end integration tests! I expect Catherine will be able to write some tests for the client that can hit the actual server, so long as one is configured and running - this will ensure everything works end to end as intended.
+
+I'll also want to manually try out the rest of the client. Since the server doesn't work yet (and I'm not bothering testing with the mock network), I've never even gotten past the first step of the login screen. I'll need to be sure that we've interpreted the protocol/instructions sufficiently similarly!
+
+I'm planning to go back and document and refactor my code somewhat once it's in working shape. I'd rather not write documentation for code that I'll be changing a lot in the next few days and doesn't work yet!

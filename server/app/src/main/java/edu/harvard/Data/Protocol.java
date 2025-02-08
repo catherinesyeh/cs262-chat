@@ -54,9 +54,26 @@ public interface Protocol {
     }
   }
 
-  public class Request {
-    Operation operation;
-    Object payload;
+  /*
+   * Contains an Operation enum code and an arbitrary payload.
+   * Casting is required to transform the payload into its proper value -
+   * this is needed because parseRequest must be called without knowing
+   * what operation is being parsed! The Operation value can then be used
+   * to correctly cast the payload and act on it.
+   * 
+   * Payload types:
+   * LOOKUP_USER: String (username)
+   * LOGIN: LoginCreateRequest
+   * CREATE_ACCOUNT: LoginCreateRequest
+   * LIST_ACCOUNTS: ListAccountsRequest
+   * SEND_MESSAGE: SendMessageRequest
+   * REQUEST_MESSAGES: int (maximum number)
+   * DELETE_MESSAGES: List<int> (list of message IDs)
+   * DELETE_ACCOUNT: null
+   */
+  public static class Request {
+    public Operation operation;
+    public Object payload;
   }
 
   // Input parsing

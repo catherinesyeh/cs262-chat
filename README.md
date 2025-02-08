@@ -8,7 +8,9 @@ This project should provide a fully functional chat system built over raw socket
 
 1. Duplicate [config_example.json](config_example.json) and rename to `config.json`.
    - Fill in your configuration details.
-2. Install python dependencies for client:
+2. Duplicate [server/config.example.properties](server/config.example.properties) and rename to `server/config.properties`.
+   - Fill in your configuration details. Be sure these match!
+3. Install the python dependencies for the client (this requires `poetry` to be installed):
 
 ```
 poetry install

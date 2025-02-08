@@ -24,6 +24,8 @@ Run `./gradlew test` from the `server` directory.
 
 ## Client
 
+The client is a Python application with a Tkinter interface.
+
 1. Navigate to [client/](client/) folder:
 
 ```

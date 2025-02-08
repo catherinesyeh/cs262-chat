@@ -381,7 +381,7 @@ class ChatClient:
     
         request = (json.dumps({"operation": operation, "payload": payload or {}}) + '\n').encode("utf-8")
         self.socket.send(request)
-        response = self.socket.recv(4096).decode("utf-8")
+        response = self.socket.makefile().readline().strip() #
         parsed_response = json.loads(response) # Parse the JSON response
         return parsed_response if parsed_response.get("success") else self._log_error(f"Operation {operation} failed: {error_message}", None)
 

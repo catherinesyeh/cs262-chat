@@ -5,6 +5,7 @@ public class Data {
   public static class Account {
     public int id;
     public String username;
+    public String password_hash;
   }
 
   public static class Message {
@@ -12,6 +13,7 @@ public class Data {
     public int sender_id;
     public int recipient_id;
     public String message;
+    public boolean read;
   }
 
   // Multipart request/response types

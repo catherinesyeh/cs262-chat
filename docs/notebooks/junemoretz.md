@@ -42,3 +42,7 @@ Once this is done, I'll probably start framing out the actual logic and database
 I'll also want to manually try out the rest of the client. Since the server doesn't work yet (and I'm not bothering testing with the mock network), I've never even gotten past the first step of the login screen. I'll need to be sure that we've interpreted the protocol/instructions sufficiently similarly!
 
 I'm planning to go back and document and refactor my code somewhat once it's in working shape. I'd rather not write documentation for code that I'll be changing a lot in the next few days and doesn't work yet!
+
+### (Update 2)
+
+The JSON and wire protocol parsers are finished, and fully tested! Everything seems to be working as intended. I'm starting on the database and logic now. The database will just be a Java object, with no persistence - if the server crashes, all data will be lost.

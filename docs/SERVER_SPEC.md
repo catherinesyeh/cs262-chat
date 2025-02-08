@@ -30,3 +30,7 @@ Only the delivery of new/unread messages is supported by the protocol, but all m
 ## Account Deletion
 
 Deletion of an account marks the account as deleted. The username will remain claimed in the database. The user's hashed password will be deleted, as will all messages received by that user, including unread messages. Messages sent by the user will remain sent.
+
+## Persistence
+
+There is currently no persistence support. A server crash will lose all accounts and messages, as they are stored only in memory.

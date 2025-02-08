@@ -1,8 +1,11 @@
 package edu.harvard.Data;
 
 import java.io.InputStream;
+import java.util.List;
 
+import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.MessageResponse;
 
 public interface Protocol {
   public class ParseException extends Exception {
@@ -93,6 +96,14 @@ public interface Protocol {
   public byte[] generateLoginResponse(boolean success, int unread_messages);
 
   public byte[] generateCreateAccountResponse(boolean success);
+
+  public byte[] generateListAccountsResponse(List<Account> accounts);
+
+  public byte[] generateSendMessageResponse(int message_id);
+
+  public byte[] generateRequestMessagesResponse(List<MessageResponse> messages);
+
+  public byte[] generateDeleteMessagesResponse(boolean success);
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message);
 }

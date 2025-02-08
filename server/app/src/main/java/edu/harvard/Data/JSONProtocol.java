@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.MessageResponse;
 
 public class JSONProtocol implements Protocol {
   public Request parseRequest(int operation_code, InputStream inputStream) throws ParseException {
@@ -117,6 +121,43 @@ public class JSONProtocol implements Protocol {
 
   public byte[] generateCreateAccountResponse(boolean success) {
     return wrapPayload(Operation.CREATE_ACCOUNT, success, null);
+  }
+
+  public byte[] generateListAccountsResponse(List<Account> accounts) {
+    JSONObject response = new JSONObject();
+    JSONArray jsonAccounts = new JSONArray();
+    for (Account account : accounts) {
+      JSONObject jsonAccount = new JSONObject();
+      jsonAccount.put("id", account.id);
+      jsonAccount.put("username", account.username);
+      jsonAccounts.put(jsonAccount);
+    }
+    response.put("accounts", jsonAccounts);
+    return wrapPayload(Operation.LIST_ACCOUNTS, true, response);
+  }
+
+  public byte[] generateSendMessageResponse(int message_id) {
+    JSONObject response = new JSONObject();
+    response.put("message_id", message_id);
+    return wrapPayload(Operation.SEND_MESSAGE, true, response);
+  }
+
+  public byte[] generateRequestMessagesResponse(List<MessageResponse> messages) {
+    JSONObject response = new JSONObject();
+    JSONArray jsonMessages = new JSONArray();
+    for (MessageResponse message : messages) {
+      JSONObject jsonMessage = new JSONObject();
+      jsonMessage.put("id", message.id);
+      jsonMessage.put("sender", message.sender);
+      jsonMessage.put("message", message.message);
+      jsonMessages.put(jsonMessage);
+    }
+    response.put("messages", jsonMessages);
+    return wrapPayload(Operation.REQUEST_MESSAGES, true, response);
+  }
+
+  public byte[] generateDeleteMessagesResponse(boolean success) {
+    return wrapPayload(Operation.DELETE_MESSAGES, success, null);
   }
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {

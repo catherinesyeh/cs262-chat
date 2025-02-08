@@ -27,6 +27,8 @@ Messages: 65535 characters (2^16-1)
 
 Only the delivery of new/unread messages is supported by the protocol, but all messages are stored. Once a message has been delivered, it is marked as read and will not be redelivered.
 
+When a message is sent to a currently logged in user, it will be automatically delivered. Automatic message deliveries will only be sent to the most recently logged in socket per user, if a user has multiple open sockets.
+
 ## Account Deletion
 
 Deletion of an account marks the account as deleted. The username will remain claimed in the database. The user's hashed password will be deleted, as will all messages received by that user, including unread messages. Messages sent by the user will remain sent.

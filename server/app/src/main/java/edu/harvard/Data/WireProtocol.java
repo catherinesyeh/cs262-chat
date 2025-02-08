@@ -5,8 +5,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
+import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.MessageResponse;
 
 public class WireProtocol implements Protocol {
   private int getFourByteInteger(InputStream stream) throws IOException {
@@ -133,6 +136,50 @@ public class WireProtocol implements Protocol {
   public byte[] generateCreateAccountResponse(boolean success) {
     ByteBuffer buffer = ByteBuffer.allocate(2);
     buffer.put((byte) Operation.CREATE_ACCOUNT.getId());
+    buffer.put((byte) (success ? 1 : 0));
+    return buffer.array();
+  }
+
+  public byte[] generateListAccountsResponse(List<Account> accounts) {
+    int totalLength = 2;
+    for (Account account : accounts) {
+      totalLength += 5 + account.username.length();
+    }
+    ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+    buffer.put((byte) Operation.LIST_ACCOUNTS.getId());
+    buffer.put((byte) accounts.size());
+    for (Account account : accounts) {
+      buffer.putInt(account.id);
+      loadStringToBuffer(buffer, account.username, 1);
+    }
+    return buffer.array();
+  }
+
+  public byte[] generateSendMessageResponse(int message_id) {
+    ByteBuffer buffer = ByteBuffer.allocate(5);
+    buffer.put((byte) 1);
+    buffer.putInt(message_id);
+    return buffer.array();
+  }
+
+  public byte[] generateRequestMessagesResponse(List<MessageResponse> messages) {
+    int totalLength = 2;
+    for (MessageResponse message : messages) {
+      totalLength += 7 + message.sender.length() + message.message.length();
+    }
+    ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+    buffer.put((byte) Operation.LIST_ACCOUNTS.getId());
+    buffer.put((byte) messages.size());
+    for (MessageResponse message : messages) {
+      buffer.putInt(message.id);
+      loadStringToBuffer(buffer, message.sender, 1);
+      loadStringToBuffer(buffer, message.message, 2);
+    }
+    return null;
+  }
+
+  public byte[] generateDeleteMessagesResponse(boolean success) {
+    ByteBuffer buffer = ByteBuffer.allocate(1);
     buffer.put((byte) (success ? 1 : 0));
     return buffer.array();
   }

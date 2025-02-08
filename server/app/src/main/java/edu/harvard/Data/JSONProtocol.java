@@ -96,7 +96,7 @@ public class JSONProtocol implements Protocol {
     JSONObject response = new JSONObject();
     response.put("operation", operation.toString());
     response.put("success", success);
-    if (success) {
+    if (payload != null) {
       response.put("payload", payload);
     }
     return (response.toString() + '\n').getBytes(StandardCharsets.UTF_8);
@@ -105,9 +105,18 @@ public class JSONProtocol implements Protocol {
   public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse) {
     JSONObject response = new JSONObject();
     response.put("exists", internalResponse.exists);
-    response.put("bcrypt_cost", internalResponse.bcrypt_cost);
-    response.put("bcrypt_salt", internalResponse.bcrypt_salt);
+    response.put("bcrypt_prefix", internalResponse.bcrypt_prefix);
     return wrapPayload(Operation.LOOKUP_USER, true, response);
+  }
+
+  public byte[] generateLoginResponse(boolean success, int unread_messages) {
+    JSONObject response = new JSONObject();
+    response.put("unread_messages", unread_messages);
+    return wrapPayload(Operation.LOGIN, true, response);
+  }
+
+  public byte[] generateCreateAccountResponse(boolean success) {
+    return wrapPayload(Operation.CREATE_ACCOUNT, success, null);
   }
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {

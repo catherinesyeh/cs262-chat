@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 
 import edu.harvard.Data.Data.AccountLookupResponse;
 
@@ -33,10 +32,17 @@ public class WireProtocol implements Protocol {
     }
   }
 
+  private static byte[] buildTwoByteInteger(int number) {
+    byte[] bytes = new byte[2];
+    bytes[0] = (byte) ((number >> 8) & 0xFF);
+    bytes[1] = (byte) (number & 0xFF);
+    return bytes;
+  }
+
   // Loads a string into an output ByteBuffer.
   public static void loadStringToBuffer(ByteBuffer buffer, String str, int length_field_size) {
     if (length_field_size == 2) {
-      buffer.put((byte) ((str.length() >> 8) & 0xFF));
+      buffer.put(buildTwoByteInteger(str.length()));
     }
     buffer.put((byte) ((str.length()) & 0xFF));
     for (byte b : str.getBytes(StandardCharsets.UTF_8)) {
@@ -96,11 +102,10 @@ public class WireProtocol implements Protocol {
   // Output building
   public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse) {
     if (internalResponse.exists) {
-      ByteBuffer buffer = ByteBuffer.allocate(19);
+      ByteBuffer buffer = ByteBuffer.allocate(31);
       buffer.put((byte) Operation.LOOKUP_USER.getId());
       buffer.put((byte) 1);
-      buffer.put((byte) internalResponse.bcrypt_cost);
-      buffer.put(Base64.getDecoder().decode(internalResponse.bcrypt_salt));
+      buffer.put(internalResponse.bcrypt_prefix.getBytes(StandardCharsets.UTF_8));
       return buffer.array();
     } else {
       ByteBuffer buffer = ByteBuffer.allocate(2);
@@ -108,6 +113,28 @@ public class WireProtocol implements Protocol {
       buffer.put((byte) 0);
       return buffer.array();
     }
+  }
+
+  public byte[] generateLoginResponse(boolean success, int unread_messages) {
+    if (success) {
+      ByteBuffer buffer = ByteBuffer.allocate(4);
+      buffer.put((byte) Operation.LOGIN.getId());
+      buffer.put((byte) 1);
+      buffer.put(buildTwoByteInteger(unread_messages));
+      return buffer.array();
+    } else {
+      ByteBuffer buffer = ByteBuffer.allocate(2);
+      buffer.put((byte) Operation.LOGIN.getId());
+      buffer.put((byte) 0);
+      return buffer.array();
+    }
+  }
+
+  public byte[] generateCreateAccountResponse(boolean success) {
+    ByteBuffer buffer = ByteBuffer.allocate(2);
+    buffer.put((byte) Operation.CREATE_ACCOUNT.getId());
+    buffer.put((byte) (success ? 1 : 0));
+    return buffer.array();
   }
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {

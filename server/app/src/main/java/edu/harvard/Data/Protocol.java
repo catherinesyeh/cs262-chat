@@ -90,5 +90,9 @@ public interface Protocol {
   // Output building
   public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse);
 
+  public byte[] generateLoginResponse(boolean success, int unread_messages);
+
+  public byte[] generateCreateAccountResponse(boolean success);
+
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message);
 }

@@ -60,8 +60,7 @@ If an operation's message specification is updated, the updated version of the o
 {
   "exists": true, // boolean
   // The remaining fields will be sent only if the account exists:
-  "bcrypt_cost": 16, // integer
-  "bcrypt_salt": "1234" // 16 bytes, transmitted as a base64 string
+  "bcrypt_prefix": "$2a$12$salt" // 29 byte string, containing bcrypt metadata and salt
 }
 ```
 

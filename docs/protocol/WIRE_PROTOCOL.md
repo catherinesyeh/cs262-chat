@@ -35,8 +35,7 @@ If an operation's message specification is updated, the updated version of the o
 
 The remaining fields will be sent only if the account exists:
 
-- Bcrypt Cost (1 byte integer)
-- Bcrypt Salt (16 bytes)
+- Bcrypt Prefix (29 byte UTF-8 string)
 
 ## Log In (Operation ID 2)
 

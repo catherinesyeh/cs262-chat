@@ -96,10 +96,9 @@ class ChatClient:
             
         if self.use_json_protocol: # Use JSON protocol for lookup
             response = self._send_json_request("LOOKUP_USER", {"username": username}, error_message="Account lookup failed")
-            
             # Extract cost and salt from JSON response if account exists
             payload = response["payload"]
-            return (payload["bcrypt_cost"], payload["bcrypt_salt"]) if payload["exists"] else None
+            return (payload["bcrypt_prefix"]) if payload["exists"] else None
 
         # Else, use custom protocol
         # Send lookup request to server (Operation ID 1)
@@ -114,7 +113,7 @@ class ChatClient:
         
         # Otherwise, account exists
         # Extract cost and salt from response
-        cost, salt = struct.unpack("!B 16s", response[2:])
+        cost, salt = struct.unpack("!B 29s", response[2:])
         return cost, salt
 
     
@@ -130,19 +129,18 @@ class ChatClient:
             return self._log_error("Not connected to server")
         
         # Lookup account
-        result = self.lookup_account(username)
-        if result is None:
+        salt = self.lookup_account(username)
+        if salt is None:
             return self._log_error("Account does not exist")
 
         # Otherwise, account exists
         # Hash the password using the cost and salt
-        _, salt = result
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt.encode("utf-8"))
 
         if self.use_json_protocol: # Use JSON protocol for login
-            response = self._send_json_request("LOGIN", {"username": username, "password_hash": hashed_password}, error_message="Invalid credentials")
+            response = self._send_json_request("LOGIN", {"username": username, "password_hash": hashed_password.decode('utf-8')}, error_message="Invalid credentials")
             payload = response["payload"]
-            return True, payload["unread_count"]
+            return True, payload["unread_messages"]
 
         # Else, use custom protocol
         # Send login request to server (Operation ID 2)
@@ -177,7 +175,7 @@ class ChatClient:
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
 
         if self.use_json_protocol: # Use JSON protocol for account creation
-            response = self._send_json_request("CREATE_ACCOUNT", {"username": username, "password_hash": hashed_password}, error_message="Account creation failed")
+            response = self._send_json_request("CREATE_ACCOUNT", {"username": username, "password_hash": hashed_password.decode('utf-8')}, error_message="Account creation failed")
             return True # Account created successfully
 
         # Else, use custom protocol

@@ -7,14 +7,17 @@ import edu.harvard.Data.JSONProtocol;
 import edu.harvard.Data.Protocol;
 import edu.harvard.Data.WireProtocol;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.LoginCreateRequest;
 import edu.harvard.Data.Protocol.Operation;
 import edu.harvard.Data.Protocol.Request;
 import edu.harvard.Logic.Database;
 import edu.harvard.Logic.OperationHandler;
+import edu.harvard.Logic.OperationHandler.LoginResponse;
 
 public class AppThread extends Thread {
   private Socket socket = null;
   private Database db = null;
+  private int logged_in_account = 0;
 
   public AppThread(Socket socket, Database db) {
     super("AppThread");
@@ -56,8 +59,25 @@ public class AppThread extends Thread {
           OperationHandler handler = new OperationHandler(db);
           switch (request.operation) {
             case LOOKUP_USER:
-              AccountLookupResponse response = handler.lookupAccount((String) request.payload);
-              socket.getOutputStream().write(protocol.generateLookupUserResponse(response));
+              AccountLookupResponse lookupResponse = handler.lookupAccount((String) request.payload);
+              socket.getOutputStream().write(protocol.generateLookupUserResponse(lookupResponse));
+              continue;
+            case LOGIN:
+              LoginResponse loginResponse = handler.login((LoginCreateRequest) request.payload);
+              if (loginResponse.success) {
+                this.logged_in_account = loginResponse.account_id;
+              }
+              socket.getOutputStream()
+                  .write(protocol.generateLoginResponse(loginResponse.success, loginResponse.unread_messages));
+              continue;
+            case CREATE_ACCOUNT:
+              int id = handler.createAccount((LoginCreateRequest) request.payload);
+              if (id != 0) {
+                this.logged_in_account = id;
+              }
+              socket.getOutputStream()
+                  .write(protocol.generateCreateAccountResponse(id != 0));
+              continue;
             default:
               throw new Protocol.HandleException("Operation not implemented: " + request.operation.toString());
           }

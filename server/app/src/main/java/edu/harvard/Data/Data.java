@@ -6,8 +6,7 @@ public class Data {
     public int id;
     public String username;
     public String password_hash;
-    public int client_bcrypt_cost;
-    public String client_bcrypt_salt;
+    public String client_bcrypt_prefix;
   }
 
   public static class Message {
@@ -21,8 +20,7 @@ public class Data {
   // Multipart request/response types
   public static class AccountLookupResponse {
     public boolean exists;
-    public int bcrypt_cost;
-    public String bcrypt_salt;
+    public String bcrypt_prefix;
   }
 
   public static class LoginCreateRequest {

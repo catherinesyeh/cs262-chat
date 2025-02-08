@@ -26,15 +26,15 @@ public class DatabaseTest {
     a2.password_hash = "test2";
 
     Database db = new Database();
-    assertTrue(db.createAccount(a1));
+    assertEquals(1, db.createAccount(a1));
     // duplicate should not work
-    assertFalse(db.createAccount(a1));
+    assertEquals(0, db.createAccount(a1));
     assertEquals(db.getAllAccounts().size(), 1);
     assertNull(db.lookupAccountByUsername(a2.username));
     assertEquals(db.lookupAccount(1).username, a1.username);
     assertEquals(db.lookupAccount(1).password_hash, a1.password_hash);
     assertEquals(db.lookupAccount(1).id, 1);
-    assertTrue(db.createAccount(a2));
+    assertEquals(2, db.createAccount(a2));
     assertEquals(db.getAllAccounts().size(), 2);
     assertEquals(db.lookupAccountByUsername(a2.username).username, a2.username);
     assertEquals(db.lookupAccount(2).username, a2.username);
@@ -43,7 +43,7 @@ public class DatabaseTest {
     assertEquals(db.getAllAccounts().size(), 1);
     assertEquals(db.getAllAccounts().iterator().next().username, a2.username);
     // be sure username stays claimed, but that lookups don't work
-    assertFalse(db.createAccount(a1));
+    assertEquals(0, db.createAccount(a1));
     assertNull(db.lookupAccountByUsername("june"));
   }
 
@@ -67,8 +67,8 @@ public class DatabaseTest {
     Data.Message m9 = buildMessage(1, 2, true, "message!");
 
     Database db = new Database();
-    assertTrue(db.createAccount(a1));
-    assertTrue(db.createAccount(a2));
+    assertEquals(1, db.createAccount(a1));
+    assertEquals(2, db.createAccount(a2));
     // Send message once
     db.createMessage(m1);
     assertEquals(db.getUnreadMessages(2, 1).getFirst().message, m1.message);

@@ -9,6 +9,12 @@ public interface Protocol {
     }
   }
 
+  public class HandleException extends Exception {
+    public HandleException(String errorMessage) {
+      super(errorMessage);
+    }
+  }
+
   public enum Operation {
     UNKNOWN(0),
     LOOKUP_USER(1),

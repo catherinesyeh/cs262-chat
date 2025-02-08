@@ -40,17 +40,17 @@ public class Database {
   }
 
   /*
-   * Verifies username is not taken.
+   * Verifies username is not taken. Returns account ID: 0 means failure.
    */
-  public synchronized boolean createAccount(Account account) {
+  public synchronized int createAccount(Account account) {
     if (accountUsernameMap.get(account.username) != null) {
-      return false;
+      return 0;
     }
     Integer next_id = accountMap.size() == 0 ? 1 : Collections.max(accountMap.keySet()) + 1;
     account.id = next_id;
     accountMap.put(next_id, account);
     accountUsernameMap.put(account.username, next_id);
-    return true;
+    return next_id;
   }
 
   public synchronized Collection<Account> getAllAccounts() {
@@ -75,6 +75,14 @@ public class Database {
         unreadMessagesPerAccount.put(message.recipient_id, new ArrayList<>(Arrays.asList(next_id)));
       }
     }
+  }
+
+  public synchronized int getUnreadMessageCount(int user_id) {
+    ArrayList<Integer> unreads = unreadMessagesPerAccount.get(user_id);
+    if (unreads == null) {
+      return 0;
+    }
+    return unreads.size();
   }
 
   /*

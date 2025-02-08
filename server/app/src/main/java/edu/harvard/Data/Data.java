@@ -6,6 +6,8 @@ public class Data {
     public int id;
     public String username;
     public String password_hash;
+    public int client_bcrypt_cost;
+    public String client_bcrypt_salt;
   }
 
   public static class Message {

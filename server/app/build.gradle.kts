@@ -24,6 +24,7 @@ dependencies {
     // This dependency is used by the application.
     implementation(libs.guava)
     implementation("org.json:json:20250107")
+    implementation("at.favre.lib:bcrypt:0.10.2")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

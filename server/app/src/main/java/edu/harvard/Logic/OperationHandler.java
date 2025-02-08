@@ -41,7 +41,7 @@ public class OperationHandler {
     Account account = new Account();
     account.client_bcrypt_prefix = request.password_hash.substring(0, 29);
     account.username = request.username;
-    account.password_hash = BCrypt.withDefaults().hashToString(16, request.password_hash.toCharArray());
+    account.password_hash = BCrypt.withDefaults().hashToString(12, request.password_hash.toCharArray());
     return db.createAccount(account);
   }
 

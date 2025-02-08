@@ -46,3 +46,12 @@ I'm planning to go back and document and refactor my code somewhat once it's in 
 ### (Update 2)
 
 The JSON and wire protocol parsers are finished, and fully tested! Everything seems to be working as intended. I'm starting on the database and logic now. The database will just be a Java object, with no persistence - if the server crashes, all data will be lost.
+
+### (Update 3)
+
+I now have a working database system, including testing, and logic for the first few operations - looking up and logging into or registering an account! I ran into a number of issues with the client while getting this working, which I'll be reaching out to Catherine about:
+
+- The bcrypt logic in Python was a bit different than what I expected. It interprets "salt" as the entire prefix of the bcrypt hash (the first 29 bytes, excluding the actual hash), rather than just the 16-byte (22-byte in base64) salt. I changed the specification to just send this instead, since it'll work well enough, and modified the client to match.
+- There were a few other client issues in how it interacted with the server, some of which I've fixed and some of which I haven't. It seems to expect a `message` for a create account request, which doesn't match the spec, and also expects users to log in after creating an account, which isn't needed per the spec. The user list request also seems to be providing more parameters than that method actually needs. There might be some other issues, but if so I haven't built the server out enough to find them yet - getting there, though!
+
+The database system should have everything needed to handle the remaining operations - I just need to write some additional higher-level logic and the response generation for both protocols. I'll then need to do some testing on both the higher-level logic and response generation. Once this is done, the server should be approximately complete, other than cleaning up and documenting the code!

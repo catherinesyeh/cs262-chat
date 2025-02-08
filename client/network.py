@@ -89,7 +89,7 @@ class ChatClient:
         OPERATION 1: Send a lookup account message to the server (LOOKUP_USER).
 
         :param username: Username to lookup
-        :return: Tuple of bcrypt cost and salt if account exists, None otherwise
+        :return: salt if account exists, None otherwise
         """
         if not self.running:
            return self._log_error("Not connected to server")
@@ -98,13 +98,13 @@ class ChatClient:
             response = self._send_json_request("LOOKUP_USER", {"username": username}, error_message="Account lookup failed")
             # Extract cost and salt from JSON response if account exists
             payload = response["payload"]
-            return (payload["bcrypt_prefix"]) if payload["exists"] else None
+            return payload["bcrypt_prefix"].encode("utf-8") if payload["exists"] else None
 
         # Else, use custom protocol
         # Send lookup request to server (Operation ID 1)
         message = struct.pack("!B B", 1, len(username)) + username.encode("utf-8")
         self.socket.send(message)
-        response = self.socket.recv(19) # Expected response: 1 byte op ID + 1 byte exists + 1 byte cost + 16-byte salt
+        response = self.socket.recv(31) # Expected response: 1 byte op ID + 1 byte exists + 29-byte bcrypt prefix
 
         _, exists = struct.unpack("!B B", response[:2])
 
@@ -113,8 +113,9 @@ class ChatClient:
         
         # Otherwise, account exists
         # Extract cost and salt from response
-        cost, salt = struct.unpack("!B 29s", response[2:])
-        return cost, salt
+        print(response, len(response))
+        salt = struct.unpack("!29s", response[2:])
+        return salt[0]
 
     
     def login(self, username, password):
@@ -135,7 +136,7 @@ class ChatClient:
 
         # Otherwise, account exists
         # Hash the password using the cost and salt
-        hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt.encode("utf-8"))
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
 
         if self.use_json_protocol: # Use JSON protocol for login
             response = self._send_json_request("LOGIN", {"username": username, "password_hash": hashed_password.decode('utf-8')}, error_message="Invalid credentials")

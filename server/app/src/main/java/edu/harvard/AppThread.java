@@ -3,6 +3,8 @@ package edu.harvard;
 import java.io.IOException;
 import java.net.Socket;
 
+import javax.imageio.IIOException;
+
 import edu.harvard.Data.JSONProtocol;
 import edu.harvard.Data.Protocol;
 import edu.harvard.Data.WireProtocol;
@@ -86,6 +88,10 @@ public class AppThread extends Thread {
           continue;
         }
       } catch (IOException e) {
+        try {
+          socket.close();
+        } catch (IOException e2) {
+        }
         System.err.println("Unexpected I/O error in main thread:");
         // TODO return error message
         if (protocol != null) {
@@ -93,6 +99,7 @@ public class AppThread extends Thread {
               "Unexpected error in handling request!");
         }
         e.printStackTrace();
+        break;
       }
     }
   }

@@ -3,6 +3,7 @@ package edu.harvard.Data;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+import static edu.harvard.Data.WireProtocol.loadStringToBuffer;
 import edu.harvard.Data.Data.ListAccountsRequest;
 import edu.harvard.Data.Data.LoginCreateRequest;
 import edu.harvard.Data.Data.SendMessageRequest;
@@ -11,22 +12,11 @@ import edu.harvard.Data.Protocol.Request;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class WireProtocolTest {
   InputStream streamFromBuffer(ByteBuffer buffer) {
     return new ByteArrayInputStream(buffer.array());
-  }
-
-  void loadStringToBuffer(ByteBuffer buffer, String str, int length_field_size) {
-    if (length_field_size == 2) {
-      buffer.put((byte) ((str.length() >> 8) & 0xFF));
-    }
-    buffer.put((byte) ((str.length()) & 0xFF));
-    for (byte b : str.getBytes(StandardCharsets.UTF_8)) {
-      buffer.put(b);
-    }
   }
 
   Request parse(int opcode, ByteBuffer request) throws Protocol.ParseException {

@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Properties;
 
+import edu.harvard.Logic.Database;
+
 public class App {
 	public static void main(String[] args) {
 		Properties prop = new Properties();
@@ -18,9 +20,10 @@ public class App {
 			String port = prop.getProperty("port");
 
 			serverSocket = new ServerSocket(Integer.parseInt(port));
+			Database db = new Database();
 
 			while (true) {
-				new AppThread(serverSocket.accept()).start();
+				new AppThread(serverSocket.accept(), db).start();
 			}
 		} catch (IOException ex) {
 			System.err.println("Unhandled I/O failure!");

@@ -2,8 +2,12 @@ package edu.harvard.Data;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
+
+import edu.harvard.Data.Data.AccountLookupResponse;
 
 public class WireProtocol implements Protocol {
   private int getFourByteInteger(InputStream stream) throws IOException {
@@ -26,6 +30,17 @@ public class WireProtocol implements Protocol {
       return new String(stream.readNBytes(length), StandardCharsets.UTF_8);
     } else {
       return "";
+    }
+  }
+
+  // Loads a string into an output ByteBuffer.
+  public static void loadStringToBuffer(ByteBuffer buffer, String str, int length_field_size) {
+    if (length_field_size == 2) {
+      buffer.put((byte) ((str.length() >> 8) & 0xFF));
+    }
+    buffer.put((byte) ((str.length()) & 0xFF));
+    for (byte b : str.getBytes(StandardCharsets.UTF_8)) {
+      buffer.put(b);
     }
   }
 
@@ -79,6 +94,22 @@ public class WireProtocol implements Protocol {
   }
 
   // Output building
+  public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse) {
+    if (internalResponse.exists) {
+      ByteBuffer buffer = ByteBuffer.allocate(19);
+      buffer.put((byte) Operation.LOOKUP_USER.getId());
+      buffer.put((byte) 1);
+      buffer.put((byte) internalResponse.bcrypt_cost);
+      buffer.put(Base64.getDecoder().decode(internalResponse.bcrypt_salt));
+      return buffer.array();
+    } else {
+      ByteBuffer buffer = ByteBuffer.allocate(2);
+      buffer.put((byte) Operation.LOOKUP_USER.getId());
+      buffer.put((byte) 0);
+      return buffer.array();
+    }
+  }
+
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {
     return new byte[1];
   }

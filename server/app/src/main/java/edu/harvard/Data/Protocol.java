@@ -2,6 +2,8 @@ package edu.harvard.Data;
 
 import java.io.InputStream;
 
+import edu.harvard.Data.Data.AccountLookupResponse;
+
 public interface Protocol {
   public class ParseException extends Exception {
     public ParseException(String errorMessage) {
@@ -86,5 +88,7 @@ public interface Protocol {
   public Request parseRequest(int operation_code, InputStream inputStream) throws ParseException;
 
   // Output building
+  public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse);
+
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message);
 }

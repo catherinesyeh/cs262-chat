@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import edu.harvard.Data.Data.AccountLookupResponse;
 
 public class JSONProtocol implements Protocol {
   public Request parseRequest(int operation_code, InputStream inputStream) throws ParseException {
@@ -89,6 +92,24 @@ public class JSONProtocol implements Protocol {
   }
 
   // Output building
+  private byte[] wrapPayload(Operation operation, boolean success, JSONObject payload) {
+    JSONObject response = new JSONObject();
+    response.put("operation", operation.toString());
+    response.put("success", success);
+    if (success) {
+      response.put("payload", payload);
+    }
+    return (response.toString() + '\n').getBytes(StandardCharsets.UTF_8);
+  }
+
+  public byte[] generateLookupUserResponse(AccountLookupResponse internalResponse) {
+    JSONObject response = new JSONObject();
+    response.put("exists", internalResponse.exists);
+    response.put("bcrypt_cost", internalResponse.bcrypt_cost);
+    response.put("bcrypt_salt", internalResponse.bcrypt_salt);
+    return wrapPayload(Operation.LOOKUP_USER, true, response);
+  }
+
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {
     return new byte[1];
   }

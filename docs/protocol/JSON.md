@@ -6,7 +6,7 @@ All messages should be sent as standard-form JSON. Messages must match a defined
 
 Some fields have maximum lengths. See [docs/SERVER_SPEC.md](/docs/SERVER_SPEC.md). Integers other than account/message IDs must be less than or equal to 255. All string fields with a maximum length not specified in that file must not be over 255 characters.
 
-All messages must be terminated by a newline (`\n`).
+All messages must be terminated by a newline (`\n`), and should not contain the newline character within them.
 
 The JSON body of a **request** message should always be the following:
 

@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext 
+import threading
 
 class ChatUI:
     """
@@ -9,6 +10,9 @@ class ChatUI:
     def __init__(self, root, client):
         """
         Initialize the user interface.
+
+        :param root: The Tkinter root window
+        :param client: The ChatClient instance
         """
         self.root = root
         self.client = client
@@ -21,6 +25,7 @@ class ChatUI:
         self.root.title("Login")
         self.create_login_screen()
     
+    ### LOGIN + ACCOUNT CREATION WORKFLOW ###
     def create_login_screen(self):
         """
         Create the login screen.
@@ -44,7 +49,9 @@ class ChatUI:
         self.username_entry.bind("<Return>", lambda event: self.check_button.invoke())
 
     def check_username(self):
-        """Checks if the username exists and prompts for the next step."""
+        """
+        Checks if the username exists and prompts for the next step.
+        """
         username = self.username_entry.get().strip()
 
         if not username:
@@ -62,7 +69,12 @@ class ChatUI:
             self.prompt_password(username, login=False)
 
     def prompt_password(self, username, login=True):
-        """Prompts for a password after username check."""
+        """
+        Prompts for a password after username check.
+
+        :param username: The username to log in or create an account for
+        :param login: Whether to log in (True) or create an account (False)
+        """
         self.clear_window()
         
         frame = tk.Frame(self.root, padx=20, pady=20)
@@ -88,34 +100,75 @@ class ChatUI:
         self.password_entry.bind("<Return>", lambda event: confirm_button.invoke())
 
     def process_credentials(self, username, login):
-        """Processes login or account creation based on user input."""
+        """
+        Processes login or account creation based on user input.
+
+        :param username: The username to log in or create an account for
+        :param login: Whether to log in (True) or create an account (False)
+        """
         password = self.password_entry.get().strip()
 
         if not password:
             messagebox.showerror("Error", "Password cannot be empty.")
             return
 
+        # Run login or account creation in a background thread
+        threading.Thread(target=self.handle_credentials, args=(username, password, login), daemon=True).start()
+
+    def handle_credentials(self, username, password, login):
+        """
+        Handles login or account creation in a background thread.
+
+        :param username: The username to log in or create an account for
+        :param password: The password to use
+        :param login: Whether to log in (True) or create an account (False)
+        """
         if login:
             # Log in to the existing account
+            print("[DEBUG] Logging in")
             success, unread_count = self.client.login(username, password)
-            if success:
-                messagebox.showinfo("Login Successful", f"You have {unread_count} unread messages.")
-                self.create_chat_screen()
-            else:
-                messagebox.showerror("Login Failed", unread_count)
+            print(f"[DEBUG] Login result: {success}, {unread_count}")
+            self.root.after(0, lambda: self.handle_login_result(success, unread_count))
         else:
             # Create a new account
-            success, message = self.client.create_account(username, password)
-            if success:
-                messagebox.showinfo("Account Created", "You can now log in!")
-                self.create_login_screen()
-            else:
-                messagebox.showerror("Error", message)
+            print("[DEBUG] Creating account")
+            success, _ = self.client.create_account(username, password)
+            print(f"[DEBUG] Account creation result: {success}")
+            self.root.after(0, lambda: self.handle_account_creation_result(success))
 
+    def handle_login_result(self, success, unread_count):
+        """
+        Handle UI update after login.
+
+        :param success: Whether the login was successful
+        :param unread_count: The number of unread messages
+        """
+        if success:
+            messagebox.showinfo("Login Successful", f"You have {unread_count} unread messages.")
+            print("[DEBUG] Calling create_chat")
+            self.create_chat_screen()
+        else:
+            messagebox.showerror("Login Failed", unread_count)
+
+    def handle_account_creation_result(self, success):
+        """
+        Handle UI update after account creation.
+
+        :param success: Whether the account creation was successful
+        """
+        if success:
+            messagebox.showinfo("Account Created", "Account successfully created! Logging in...")
+            print("[DEBUG] Calling create_chat")
+            self.create_chat_screen()
+        else:
+            messagebox.showerror("Error", "Failed to create an account.")
+
+    ### CHAT SCREEN WORKFLOW ###
     def create_chat_screen(self):
         """
         Create the main chat screen.
         """
+        print("[DEBUG] In create_chat")
         self.clear_window()
         self.root.title("Chat")
         self.root.geometry("900x600")  # Larger window
@@ -183,46 +236,87 @@ class ChatUI:
         self.load_messages()
         self.client.start_listener(self.display_message)
 
-
+    ### LIST ACCOUNTS WORKFLOW ###
     def load_user_list(self):
-        """Fetch and display a paginated list of users."""
+        """
+        Start a thread to fetch and display users.
+        """
+        threading.Thread(target=self.fetch_users, daemon=True).start()
+
+    def fetch_users(self):
+        """
+        Fetch user list in a background thread.
+        """
         search_text = self.user_search.get().strip()
 
-        users = self.client.list_accounts(self.client.max_users, self.current_user_page * self.client.max_users, search_text)
-        
+        users = self.client.list_accounts(self.current_user_page * self.client.max_users, search_text)
+
+        # Schedule an update to the user list
+        self.root.after(0, lambda: self.update_user_list(users))
+    
+    def update_user_list(self, users):
+        """
+        Update the user list UI.
+
+        :param users: The list of users to display
+        """
         self.user_listbox.delete(0, tk.END)
 
         if not users:
             self.user_listbox.insert(tk.END, "No users found.")
             return
-
-        for _, username in users:
-            self.user_listbox.insert(tk.END, username)
+        
+        self.user_listbox.insert(tk.END, *[username for _, username in users])
 
         # Update pagination buttons
         self.prev_user_button.config(state=tk.NORMAL if self.current_user_page > 0 else tk.DISABLED)
         self.next_user_button.config(state=tk.NORMAL if len(users) == self.client.max_users else tk.DISABLED)
 
     def change_user_page(self, direction):
-        """Paginate through user list."""
+        """
+        Paginate through user list.
+
+        :param direction: The direction to move in the user list
+        """
         new_page = self.current_user_page + direction
         if new_page < 0:
             return 
         
         self.current_user_page = new_page
+        print(f"Changing user page to {self.current_user_page}")
         self.load_user_list()
 
+    ### MESSAGES WORKFLOW ###
     def load_messages(self):
-        """Fetch and display a paginated list of messages."""
-        messages = self.client.request_messages(self.client.max_msg, self.current_msg_page * self.client.max_msg)
+        """
+        Start a thread to fetch and display messages.
+        """
+        threading.Thread(target=self.fetch_messages, daemon=True).start()
 
+    def fetch_messages(self):
+        """
+        Fetch messages.
+        """
+        messages = self.client.request_messages()
+
+        # TODO: Dealing with message pagination
         print(f"Loading messages: {messages}")
+        self.root.after(0, lambda: self.update_messages(messages))
 
+    def update_messages(self, messages):
+        """
+        Update the chat display with messages.
+
+        :param messages: The list of messages to display
+        """
         self.chat_display.config(state="normal")
         self.chat_display.delete("1.0", tk.END)
+        
+        # Build the message string in one go
+        chat_text = "\n".join(f"{sender}: {message}" for _, sender, message in messages)
 
-        for _, sender, message in messages:
-            self.chat_display.insert(tk.END, f"{sender}: {message}\n")
+        # Insert all at once
+        self.chat_display.insert(tk.END, chat_text + "\n")
 
         self.chat_display.config(state="disabled")
 
@@ -231,7 +325,11 @@ class ChatUI:
         self.next_msg_button.config(state=tk.NORMAL if len(messages) == self.client.max_msg else tk.DISABLED)
 
     def change_msg_page(self, direction):
-        """Paginate through messages."""
+        """
+        Paginate through messages.
+
+        :param direction: The direction to move in the message list
+        """
         self.current_msg_page += direction
         if self.current_msg_page < 0:
             self.current_msg_page = 0
@@ -239,8 +337,11 @@ class ChatUI:
         print(f"Changing message page to {self.current_msg_page}")
         self.load_messages()
     
+    ### SEND MESSAGE WORKFLOW ###
     def open_new_message_window(self):
-        """Opens a window to compose and send a new message."""
+        """
+        Opens a window to compose and send a new message.
+        """
         new_msg_window = tk.Toplevel(self.root)
         new_msg_window.title("New Message")
         new_msg_window.geometry("400x250")
@@ -256,33 +357,63 @@ class ChatUI:
         message_entry = tk.Text(new_msg_window, height=5)
         message_entry.pack(fill=tk.BOTH, padx=10, pady=5)
 
-        def send_message():
-            """Handles sending the message."""
-            recipient = recipient_entry.get().strip()
-            message = message_entry.get("1.0", tk.END).strip()
+        tk.Button(new_msg_window, text="Send", command=lambda: self.send_message(recipient_entry, message_entry, new_msg_window)).pack(pady=10)
 
-            if not recipient or not message:
-                messagebox.showerror("Error", "Recipient and message cannot be empty.")
-                return
+    def send_message(self, recipient_entry, message_entry, new_msg_window):
+        """
+        Handles sending the message.
 
-            success = self.client.send_message(recipient, message)
-            if success:
-                messagebox.showinfo("Message Sent", f"Message to {recipient} sent successfully!")
-                new_msg_window.destroy()
-            else:
-                messagebox.showerror("Error", "Failed to send message.")
+        :param recipient_entry: The entry field for the recipient
+        :param message_entry: The text field for the message
+        :param new_msg_window: The window to close after sending
+        """
+        recipient = recipient_entry.get().strip()
+        message = message_entry.get("1.0", tk.END).strip()
 
-        tk.Button(new_msg_window, text="Send", command=send_message).pack(pady=10)
+        if not recipient or not message:
+            messagebox.showerror("Error", "Recipient and message cannot be empty.")
+            return
+        
+        # Start thread to send message
+        threading.Thread(target=self.process_send_message, args=(recipient, message, new_msg_window), daemon=True).start()
+    
+    def process_send_message(self, recipient, message, new_msg_window):
+        """
+        Send the message in a background thread.
+
+        :param recipient: The recipient of the message
+        :param message: The message to send
+        :param new_msg_window: The window to close after sending
+        """
+        success = self.client.send_message(recipient, message)
+        self.root.after(0, lambda: self.handle_send_message_result(success, recipient, new_msg_window))
+    
+    def handle_send_message_result(self, success, recipient, new_msg_window):
+        """
+        Handle UI update after sending a message.
+
+        :param success: Whether the message was sent successfully
+        :param recipient: The recipient of the message
+        :param new_msg_window: The window to close after sending
+        """
+        if success:
+            messagebox.showinfo("Message Sent", f"Message to {recipient} sent successfully!")
+            new_msg_window.destroy()
+        else:
+            messagebox.showerror("Error", "Failed to send message.")
     
     def display_message(self, message):
         """
         Display a message in the chat window.
+
+        :param message: The message to display
         """
         self.chat_display.config(state="normal")
         self.chat_display.insert(tk.END, message + "\n")
         self.chat_display.config(state="disabled")
         self.chat_display.yview(tk.END)
 
+    ### DELETE MESSAGE WORKFLOW ###
     def show_delete_message_window(self):
         """
         Open a window to delete messages.
@@ -304,37 +435,80 @@ class ChatUI:
             msg_id_map[idx] = msg_id
             msg_listbox.insert(tk.END, display_text)
 
-        def delete_selected_messages():
-            """Delete selected messages."""
-            selected_indices = msg_listbox.curselection()
-            selected_msg_ids = [msg_id_map[i] for i in selected_indices]
+        tk.Button(delete_window, text="Delete", command=lambda: self.delete_selected_messages(msg_listbox, msg_id_map, delete_window)).pack()
 
-            if self.client.delete_messages(selected_msg_ids):
-                messagebox.showinfo("Success", "Messages deleted successfully")
-                delete_window.destroy()
-            else:
-                messagebox.showerror("Error", "Failed to delete messages")
+    def delete_selected_messages(self, msg_listbox, msg_id_map, delete_window):
+        """
+        Delete selected messages.
 
-        tk.Button(delete_window, text="Delete", command=delete_selected_messages).pack()
+        :param msg_listbox: The listbox containing messages
+        :param msg_id_map: The mapping of listbox index to message ID
+        :param delete_window: The window to close after deletion
+        """
+        selected_indices = msg_listbox.curselection()
+        selected_msg_ids = [msg_id_map[i] for i in selected_indices]
 
+        # Start thread to delete messages
+        threading.Thread(target=self.process_delete_messages, args=(selected_msg_ids, delete_window), daemon=True).start()
+
+    def process_delete_messages(self, selected_msg_ids, delete_window):
+        """
+        Process message deletion in a background thread.
+
+        :param selected_msg_ids: The list of message IDs to delete
+        :param delete_window: The window to close after deletion
+        """
+        success = self.client.delete_messages(selected_msg_ids)
+        self.root.after(0, lambda: self.handle_delete_messages_result(success, delete_window))
+    
+    def handle_delete_messages_result(self, success, delete_window):
+        """
+        Handle UI update after deleting messages.
+
+        :param success: Whether the messages were deleted successfully
+        :param delete_window: The window to close after deletion
+        """
+        if success:
+            messagebox.showinfo("Success", "Messages deleted successfully")
+            delete_window.destroy()
+        else:
+            messagebox.showerror("Error", "Failed to delete messages")
+
+    ### DELETE ACCOUNT WORKFLOW ###
     def confirm_delete_account(self):
         """
         Confirm account deletion.
         """
         confirm = messagebox.askokcancel("Confirm", "Are you sure you want to delete your account?")
         if confirm:
-            if self.client.delete_account():
-                messagebox.showinfo("Account Deleted", "Account deleted successfully")
-                self.root.quit()
-            else:
-                messagebox.showerror("Error", "Failed to delete account")
+            # Start thread to delete account
+            threading.Thread(target=self.delete_account, daemon=True).start()
+        
+    def delete_account(self):
+        """
+        Delete the account in a background thread.
+        """
+        success = self.client.delete_account()
+        self.root.after(0, lambda: self.handle_delete_account_result(success))
+    
+    def handle_delete_account_result(self, success):
+        """
+        Handle UI update after deleting the account.
+
+        :param success: Whether the account was deleted successfully
+        """
+        if success:
+            messagebox.showinfo("Account Deleted", "Account deleted successfully")
+            self.root.quit()
+        else:
+            messagebox.showerror("Error", "Failed to delete account")
     
     def disconnect(self):
         """
         Disconnect from the server.
         """
         self.client.close()
-        self.root.quit()
+        self.root.destroy()
 
     def clear_window(self):
         """

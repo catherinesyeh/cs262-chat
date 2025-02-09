@@ -152,6 +152,7 @@ class ChatClient:
         response = self.socket.recv(4) # Expected response: 1 byte op ID + 1 byte success + 2 byte unread count
 
         _, success, unread_count = struct.unpack("!B B H", response)
+
         if success == 0:
             self._log_error("Invalid credentials", False)
         return True, unread_count # Return the number of unread messages if login successful
@@ -162,7 +163,7 @@ class ChatClient:
 
         :param username: Username to create
         :param password: Password to create
-        :return: True if account is created successfully, False otherwise
+        :return: Tuple of success flag and unread message count if account is created successfully, False otherwise
         """
         if not self.running:
             return self._log_error("Not connected to server", False)
@@ -190,7 +191,8 @@ class ChatClient:
 
         if success == 0:
             return self._log_error("Account creation failed", False)
-        return True # Account created successfully
+        # Automatically login after account creation
+        return self.login(username, password) # Return the login result
     
     def list_accounts(self, offset_id=0, filter_text=""):
         """
@@ -204,7 +206,7 @@ class ChatClient:
             return self._log_error("Not connected to server")
         
         if self.use_json_protocol: # Use JSON protocol for listing accounts
-            response = self._send_json_request("LIST_ACCOUNTS", {"maximum_number": self.max_users, "offset_id": offset_id, "filter_text": filter_text}, error_message="Could not retrieve accounts")
+            response = self._send_json_request("LIST_ACCOUNTS", {"maximum_number": self.max_users, "offset_account_id": offset_id, "filter_text": filter_text}, error_message="Could not retrieve accounts")
             account_data = response["payload"]["accounts"]
             accounts = [(account["account_id"], account["username"]) for account in account_data]
             print(f"[ACCOUNTS] Retrieved {len(accounts)} accounts")

@@ -26,6 +26,7 @@ public class OperationHandler {
     this.db = db;
   }
 
+  // account_id is only needed by the thread to associate a socket with an account
   public static class LoginResponse {
     public boolean success;
     public int account_id;
@@ -49,7 +50,11 @@ public class OperationHandler {
    */
   public int createAccount(LoginCreateRequest request) throws HandleException {
     Account account = new Account();
-    account.client_bcrypt_prefix = request.password_hash.substring(0, 29);
+    try {
+      account.client_bcrypt_prefix = request.password_hash.substring(0, 29);
+    } catch (Exception e) {
+      throw new HandleException("Invalid password hash!");
+    }
     account.username = request.username;
     account.password_hash = BCrypt.withDefaults().hashToString(12, request.password_hash.toCharArray());
     return db.createAccount(account);

@@ -39,6 +39,7 @@ public class Database {
     accountUsernameMap = new HashMap<>();
     messageMap = new HashMap<>();
     unreadMessagesPerAccount = new HashMap<>();
+    registeredSockets = new HashMap<>();
   }
 
   public synchronized Account lookupAccount(int id) {
@@ -86,10 +87,8 @@ public class Database {
     if (!message.read) {
       List<Integer> unreads = unreadMessagesPerAccount.get(message.recipient_id);
       if (unreads != null) {
-        System.out.println(next_id);
         unreads.add(next_id);
       } else {
-        System.out.println(message.recipient_id);
         unreadMessagesPerAccount.put(message.recipient_id, new ArrayList<>(Arrays.asList(next_id)));
       }
     }

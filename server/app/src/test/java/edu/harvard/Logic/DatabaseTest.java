@@ -1,10 +1,9 @@
 package edu.harvard.Logic;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import edu.harvard.Data.Data;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class DatabaseTest {
   Data.Message buildMessage(int sender_id, int recipient_id, boolean read, String message) {
@@ -81,6 +80,7 @@ public class DatabaseTest {
     db.createMessage(m5);
     db.createMessage(m6);
     db.createMessage(m7);
+    assertEquals(db.getUnreadMessageCount(2), 6);
     assertEquals(db.getUnreadMessages(2, 1).size(), 1);
     assertEquals(db.getUnreadMessages(2, 3).size(), 3);
     assertEquals(db.getUnreadMessages(2, 10).size(), 2);
@@ -90,8 +90,9 @@ public class DatabaseTest {
     db.deleteMessage(8);
     assertEquals(db.getUnreadMessages(2, 10).size(), 0);
     // Test already-read message
-    db.createMessage(m9);
+    int id = db.createMessage(m9);
     assertEquals(db.getUnreadMessages(2, 10).size(), 0);
+    assertNotNull(db.getMessage(id));
   }
 
 }

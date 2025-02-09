@@ -15,16 +15,21 @@ import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
 import edu.harvard.Data.Data.MessageResponse;
 
+/*
+ * Implements the JSON request/response protocol (JSON.md).
+ */
 public class JSONProtocol implements Protocol {
+  // The operation_code parameter is just the first byte, and is ignored here.
   public Request parseRequest(int operation_code, InputStream inputStream) throws ParseException {
     try {
-      // PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      // Read a single line off the input stream
       BufferedReader in = new BufferedReader(
           new InputStreamReader(
               inputStream));
       String inputLine = "{".concat(in.readLine());
       JSONObject obj = null;
       Operation operation;
+      // Attempt to parse the line as JSON, and determine the operation code
       try {
         obj = new JSONObject(inputLine);
         operation = Operation.valueOf(obj.getString("operation"));
@@ -34,6 +39,7 @@ public class JSONProtocol implements Protocol {
       } catch (JSONException ex) {
         throw new ParseException("Could not parse operation code.");
       }
+      // Pull the `payload` property off the JSON request, if needed.
       JSONObject payload = null;
       try {
         // All other operations require some payload.
@@ -43,6 +49,7 @@ public class JSONProtocol implements Protocol {
       } catch (JSONException ex) {
         throw new ParseException("JSON requests must include a payload field.");
       }
+      // Remaining parse steps are operation dependent.
       try {
         Request parsedRequest = new Request();
         parsedRequest.operation = operation;
@@ -52,6 +59,7 @@ public class JSONProtocol implements Protocol {
             return parsedRequest;
           case LOGIN:
           case CREATE_ACCOUNT:
+            // These two requests use the same format.
             Data.LoginCreateRequest loginCreatePayload = new Data.LoginCreateRequest();
             loginCreatePayload.username = payload.getString("username");
             loginCreatePayload.password_hash = payload.getString("password_hash");
@@ -61,6 +69,7 @@ public class JSONProtocol implements Protocol {
             Data.ListAccountsRequest listPayload = new Data.ListAccountsRequest();
             listPayload.maximum_number = payload.getInt("maximum_number");
             listPayload.offset_account_id = payload.getInt("offset_account_id");
+            // Filter text is optional, treat it as empty string if none exists.
             try {
               listPayload.filter_text = payload.getString("filter_text");
             } catch (JSONException ex) {
@@ -96,6 +105,8 @@ public class JSONProtocol implements Protocol {
   }
 
   // Output building
+
+  // Standard JSON response format
   private byte[] wrapPayload(Operation operation, boolean success, JSONObject payload) {
     JSONObject response = new JSONObject();
     response.put("operation", operation.toString());
@@ -161,6 +172,11 @@ public class JSONProtocol implements Protocol {
   }
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {
-    return new byte[1];
+    JSONObject response = new JSONObject();
+    response.put("operation", operation.toString());
+    response.put("success", false);
+    response.put("unexpected_failure", true);
+    response.put("message", message);
+    return (response.toString() + '\n').getBytes(StandardCharsets.UTF_8);
   }
 }

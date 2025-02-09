@@ -11,7 +11,11 @@ import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
 import edu.harvard.Data.Data.MessageResponse;
 
+/*
+ * Implements the custom request/response protocol (WIRE_PROTOCOL.md).
+ */
 public class WireProtocol implements Protocol {
+  // Reads a four-byte big-endian integer from the request.
   private int getFourByteInteger(InputStream stream) throws IOException {
     return java.nio.ByteBuffer.wrap(stream.readNBytes(4)).getInt();
   }
@@ -46,8 +50,9 @@ public class WireProtocol implements Protocol {
   public static void loadStringToBuffer(ByteBuffer buffer, String str, int length_field_size) {
     if (length_field_size == 2) {
       buffer.put(buildTwoByteInteger(str.length()));
+    } else {
+      buffer.put((byte) ((str.length()) & 0xFF));
     }
-    buffer.put((byte) ((str.length()) & 0xFF));
     for (byte b : str.getBytes(StandardCharsets.UTF_8)) {
       buffer.put(b);
     }
@@ -185,6 +190,10 @@ public class WireProtocol implements Protocol {
   }
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message) {
-    return new byte[1];
+    ByteBuffer buffer = ByteBuffer.allocate(4 + message.length());
+    buffer.put((byte) 255);
+    buffer.put((byte) operation.getId());
+    loadStringToBuffer(buffer, message, 2);
+    return buffer.array();
   }
 }

@@ -7,7 +7,11 @@ import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
 import edu.harvard.Data.Data.MessageResponse;
 
+/*
+ * Generic protocol interface. This allows the JSON and wire protocols to be swapped easily.
+ */
 public interface Protocol {
+  // Custom exceptions, caught in AppThread to generate failure responses
   public class ParseException extends Exception {
     public ParseException(String errorMessage) {
       super(errorMessage);

@@ -85,7 +85,7 @@ public class OperationHandler {
     Collection<Account> allAccounts = db.getAllAccounts();
     for (Account account : allAccounts) {
       boolean include = true;
-      if (account.id < request.offset_account_id) {
+      if (account.id <= request.offset_account_id) {
         include = false;
       }
       if (!account.username.contains(request.filter_text)) {

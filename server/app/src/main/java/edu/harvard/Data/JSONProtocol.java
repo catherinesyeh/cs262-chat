@@ -127,7 +127,7 @@ public class JSONProtocol implements Protocol {
   public byte[] generateLoginResponse(boolean success, int unread_messages) {
     JSONObject response = new JSONObject();
     response.put("unread_messages", unread_messages);
-    return wrapPayload(Operation.LOGIN, true, response);
+    return wrapPayload(Operation.LOGIN, success, response);
   }
 
   public byte[] generateCreateAccountResponse(boolean success) {

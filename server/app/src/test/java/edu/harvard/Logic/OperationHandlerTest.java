@@ -2,7 +2,9 @@ package edu.harvard.Logic;
 
 import org.junit.jupiter.api.Test;
 
+import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.ListAccountsRequest;
 import edu.harvard.Data.Data.LoginCreateRequest;
 import edu.harvard.Data.Data.MessageResponse;
 import edu.harvard.Data.Data.SendMessageRequest;
@@ -12,6 +14,7 @@ import edu.harvard.Logic.OperationHandler.LoginResponse;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class OperationHandlerTest {
   @Test
@@ -36,6 +39,25 @@ public class OperationHandlerTest {
       assertEquals(true, login.success);
       assertEquals(1, login.account_id);
       assertEquals(0, login.unread_messages);
+      // List accounts
+      ListAccountsRequest listRequest1 = new ListAccountsRequest();
+      listRequest1.maximum_number = 1;
+      listRequest1.offset_account_id = 0;
+      listRequest1.filter_text = "";
+      List<Account> accountList = handler.listAccounts(listRequest1);
+      assertEquals(accountList.get(0).username, u1.username);
+      ListAccountsRequest listRequest2 = new ListAccountsRequest();
+      listRequest2.maximum_number = 1;
+      listRequest2.offset_account_id = 1;
+      listRequest2.filter_text = "";
+      List<Account> accountList2 = handler.listAccounts(listRequest2);
+      assertEquals(accountList2.get(0).username, u2.username);
+      ListAccountsRequest listRequest3 = new ListAccountsRequest();
+      listRequest3.maximum_number = 1;
+      listRequest3.offset_account_id = 0;
+      listRequest3.filter_text = "c";
+      List<Account> accountList3 = handler.listAccounts(listRequest3);
+      assertEquals(accountList3.get(0).username, u2.username);
       // Send a message
       SendMessageRequest msg = new SendMessageRequest();
       msg.recipient = "catherine";

@@ -253,7 +253,7 @@ public class JSONProtocolTest {
   }
 
   @Test
-  void deleteMesageResponse() {
+  void deleteMessageResponse() {
     JSONObject obj = parseResponse(new JSONProtocol().generateDeleteMessagesResponse(true));
     assertEquals(obj.get("operation"), Operation.DELETE_MESSAGES.toString());
     assertEquals(obj.get("success"), true);
@@ -261,4 +261,13 @@ public class JSONProtocolTest {
     assertEquals(obj2.get("success"), false);
   }
 
+  @Test
+  void unexpectedFailure() {
+    JSONObject obj = parseResponse(
+        new JSONProtocol().generateUnexpectedFailureResponse(Operation.LIST_ACCOUNTS, "example"));
+    assertEquals(obj.get("operation"), Operation.LIST_ACCOUNTS.toString());
+    assertEquals(obj.get("success"), false);
+    assertEquals(obj.get("unexpected_failure"), true);
+    assertEquals(obj.get("message"), "example");
+  }
 }

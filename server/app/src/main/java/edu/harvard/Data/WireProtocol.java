@@ -23,7 +23,7 @@ public class WireProtocol implements Protocol {
   // Gets a length-prefixed string from the input stream.
   // The length must either be a single byte or a two or four-byte big-endian
   // integer.
-  private String getString(InputStream stream, int string_length) throws IOException {
+  public String getString(InputStream stream, int string_length) throws IOException {
     int length;
     if (string_length == 4) {
       length = getFourByteInteger(stream);
@@ -161,7 +161,8 @@ public class WireProtocol implements Protocol {
   }
 
   public byte[] generateSendMessageResponse(int message_id) {
-    ByteBuffer buffer = ByteBuffer.allocate(5);
+    ByteBuffer buffer = ByteBuffer.allocate(6);
+    buffer.put((byte) Operation.SEND_MESSAGE.getId());
     buffer.put((byte) 1);
     buffer.putInt(message_id);
     return buffer.array();
@@ -173,18 +174,19 @@ public class WireProtocol implements Protocol {
       totalLength += 7 + message.sender.length() + message.message.length();
     }
     ByteBuffer buffer = ByteBuffer.allocate(totalLength);
-    buffer.put((byte) Operation.LIST_ACCOUNTS.getId());
+    buffer.put((byte) Operation.REQUEST_MESSAGES.getId());
     buffer.put((byte) messages.size());
     for (MessageResponse message : messages) {
       buffer.putInt(message.id);
       loadStringToBuffer(buffer, message.sender, 1);
       loadStringToBuffer(buffer, message.message, 2);
     }
-    return null;
+    return buffer.array();
   }
 
   public byte[] generateDeleteMessagesResponse(boolean success) {
-    ByteBuffer buffer = ByteBuffer.allocate(1);
+    ByteBuffer buffer = ByteBuffer.allocate(2);
+    buffer.put((byte) Operation.DELETE_MESSAGES.getId());
     buffer.put((byte) (success ? 1 : 0));
     return buffer.array();
   }

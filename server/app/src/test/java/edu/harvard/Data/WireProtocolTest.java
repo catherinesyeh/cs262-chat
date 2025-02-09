@@ -4,14 +4,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import static edu.harvard.Data.WireProtocol.loadStringToBuffer;
+
+import edu.harvard.Data.Data.Account;
+import edu.harvard.Data.Data.AccountLookupResponse;
 import edu.harvard.Data.Data.ListAccountsRequest;
 import edu.harvard.Data.Data.LoginCreateRequest;
+import edu.harvard.Data.Data.MessageResponse;
 import edu.harvard.Data.Data.SendMessageRequest;
 import edu.harvard.Data.Protocol.Operation;
 import edu.harvard.Data.Protocol.Request;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WireProtocolTest {
@@ -28,6 +34,24 @@ public class WireProtocolTest {
       return new WireProtocol().parseRequest(opcode, streamFromBuffer(request));
     } catch (Exception ex) {
       throw new RuntimeException("Unexpecting parsing exception!");
+    }
+  }
+
+  private String getString(ByteBuffer buffer, int string_length) {
+    int length;
+    if (string_length == 4) {
+      length = buffer.getInt();
+    } else if (string_length == 2) {
+      length = ((int) buffer.get() << 8) + buffer.get();
+    } else {
+      length = buffer.get();
+    }
+    if (length > 0) {
+      byte[] str = new byte[length];
+      buffer.get(str);
+      return new String(str, StandardCharsets.UTF_8);
+    } else {
+      return "";
     }
   }
 
@@ -152,5 +176,114 @@ public class WireProtocolTest {
     ByteBuffer buffer = ByteBuffer.allocate(1);
     Request req = parseValid(Operation.DELETE_MESSAGES.getId(), buffer);
     assertEquals(req.operation, Operation.DELETE_MESSAGES);
+  }
+
+  @Test
+  void lookupUserResponse() {
+    AccountLookupResponse response = new AccountLookupResponse();
+    response.exists = true;
+    response.bcrypt_prefix = "1".repeat(29);
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateLookupUserResponse(response));
+    assertEquals(Operation.LOOKUP_USER.getId(), buffer.get());
+    assertEquals(1, buffer.get());
+    assertEquals('1', buffer.get());
+    AccountLookupResponse response2 = new AccountLookupResponse();
+    response2.exists = false;
+    ByteBuffer buffer2 = ByteBuffer.wrap(new WireProtocol().generateLookupUserResponse(response2));
+    assertEquals(Operation.LOOKUP_USER.getId(), buffer2.get());
+    assertEquals(0, buffer2.get());
+  }
+
+  @Test
+  void loginResponse() {
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateLoginResponse(true, 5));
+    assertEquals(Operation.LOGIN.getId(), buffer.get());
+    assertEquals(1, buffer.get());
+    assertEquals(0, buffer.get());
+    assertEquals(5, buffer.get());
+    ByteBuffer buffer2 = ByteBuffer.wrap(new WireProtocol().generateLoginResponse(false, 0));
+    assertEquals(Operation.LOGIN.getId(), buffer2.get());
+    assertEquals(0, buffer2.get());
+  }
+
+  @Test
+  void createAccountResponse() {
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateCreateAccountResponse(true));
+    assertEquals(Operation.CREATE_ACCOUNT.getId(), buffer.get());
+    assertEquals(1, buffer.get());
+    ByteBuffer buffer2 = ByteBuffer.wrap(new WireProtocol().generateCreateAccountResponse(false));
+    assertEquals(Operation.CREATE_ACCOUNT.getId(), buffer2.get());
+    assertEquals(0, buffer2.get());
+  }
+
+  @Test
+  void listAccountsResponse() {
+    List<Account> list = new ArrayList<>(2);
+    Account a1 = new Account();
+    a1.id = 1;
+    a1.username = "june";
+    Account a2 = new Account();
+    a2.id = 2;
+    a2.username = "catherine";
+    list.add(a1);
+    list.add(a2);
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateListAccountsResponse(list));
+    assertEquals(Operation.LIST_ACCOUNTS.getId(), buffer.get());
+    assertEquals(2, buffer.get());
+    assertEquals(1, buffer.getInt());
+    assertEquals("june", getString(buffer, 1));
+    assertEquals(2, buffer.getInt());
+    assertEquals("catherine", getString(buffer, 1));
+  }
+
+  @Test
+  void sendMessageResponse() {
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateSendMessageResponse(999999));
+    assertEquals(Operation.SEND_MESSAGE.getId(), buffer.get());
+    assertEquals(1, buffer.get());
+    assertEquals(999999, buffer.getInt());
+  }
+
+  @Test
+  void requestMessagesResponse() {
+    List<MessageResponse> list = new ArrayList<>(2);
+    MessageResponse m1 = new MessageResponse();
+    m1.id = 1;
+    m1.sender = "june";
+    m1.message = "Hi!";
+    MessageResponse m2 = new MessageResponse();
+    m2.id = 2;
+    m2.sender = "catherine";
+    m2.message = "hi".repeat(9999);
+    list.add(m1);
+    list.add(m2);
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateRequestMessagesResponse(list));
+    assertEquals(Operation.REQUEST_MESSAGES.getId(), buffer.get());
+    assertEquals(2, buffer.get());
+    assertEquals(1, buffer.getInt());
+    assertEquals("june", getString(buffer, 1));
+    assertEquals("Hi!", getString(buffer, 2));
+    assertEquals(2, buffer.getInt());
+    assertEquals("catherine", getString(buffer, 1));
+    assertEquals(m2.message, getString(buffer, 2));
+  }
+
+  @Test
+  void deleteMessageResponse() {
+    ByteBuffer buffer = ByteBuffer.wrap(new WireProtocol().generateDeleteMessagesResponse(true));
+    assertEquals(Operation.DELETE_MESSAGES.getId(), buffer.get());
+    assertEquals(1, buffer.get());
+    ByteBuffer buffer2 = ByteBuffer.wrap(new WireProtocol().generateDeleteMessagesResponse(false));
+    assertEquals(Operation.DELETE_MESSAGES.getId(), buffer2.get());
+    assertEquals(0, buffer2.get());
+  }
+
+  @Test
+  void unexpectedFailure() {
+    ByteBuffer buffer = ByteBuffer
+        .wrap(new WireProtocol().generateUnexpectedFailureResponse(Operation.LIST_ACCOUNTS, "example"));
+    assertEquals(-1, buffer.get());
+    assertEquals(Operation.LIST_ACCOUNTS.getId(), buffer.get());
+    assertEquals("example", getString(buffer, 2));
   }
 }

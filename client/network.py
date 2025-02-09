@@ -28,6 +28,7 @@ class ChatClient:
         self.received_messages = [] # List of received messages
         self.max_msg = max_msg # Maximum number of messages to display
         self.max_users = max_users # Maximum number of users to display
+        self.last_offset_account_id = 0 # Offset ID for pagination of accounts
         self.message_callback = None # Callback function to handle received messages
         print("[INITIALIZED] Client initialized")
         self.connect()
@@ -151,6 +152,9 @@ class ChatClient:
 
         response = self.socket.recv(4) # Expected response: 1 byte op ID + 1 byte success + 2 byte unread count
 
+        if len(response) < 4:
+            return self._log_error("LOGIN Invalid response from server", False)
+
         _, success, unread_count = struct.unpack("!B B H", response)
 
         if success == 0:
@@ -194,43 +198,60 @@ class ChatClient:
         # Automatically login after account creation
         return self.login(username, password) # Return the login result
     
-    def list_accounts(self, offset_id=0, filter_text=""):
+    def list_accounts(self, filter_text=""):
         """
         OPERATION 4: Request a list of accounts from the server (LIST_ACCOUNTS).
 
-        :param offset_id: Offset ID for pagination
         :param filter_text: Filter text to search for
         :return: List of accounts
         """
         if not self.running:
             return self._log_error("Not connected to server")
         
+        # Determine the offset ID based on the direction user wants to go
+        offset_id = self.last_offset_account_id
+
+        print("[ACCOUNTS] Offset ID:", offset_id, ", Filter:", filter_text)
+        
         if self.use_json_protocol: # Use JSON protocol for listing accounts
             response = self._send_json_request("LIST_ACCOUNTS", {"maximum_number": self.max_users, "offset_account_id": offset_id, "filter_text": filter_text}, error_message="Could not retrieve accounts")
             account_data = response["payload"]["accounts"]
             accounts = [(account["account_id"], account["username"]) for account in account_data]
-            print(f"[ACCOUNTS] Retrieved {len(accounts)} accounts")
-            return accounts
-
-        # Else, use custom protocol
+        else: # Else, use custom protocol
         # Send list accounts request to server (Operation ID 4)
-        message = struct.pack("!B B I B", 4, self.max_users, offset_id, len(filter_text))
-        message += filter_text.encode("utf-8")
-        self.socket.send(message)
+            message = struct.pack("!B B I B", 4, self.max_users, offset_id, len(filter_text))
+            message += filter_text.encode("utf-8")
+            self.socket.send(message)
 
-        response = self.socket.recv(2) # Expected response: 1 byte op ID + 1 byte number of accounts
-        _, num_accounts = struct.unpack("!B B", response)
+            response = self.socket.recv(2) # Expected response: 1 byte op ID + 1 byte number of accounts
+            print("LIST_ACCOUNTS Raw Response:", response)
+            op_id, num_accounts = struct.unpack("!B B", response[:2])
 
-        accounts = []
-        for _ in range(num_accounts):
-            header = self.socket.recv(5) # First 5 bytes: 4 byte account ID + 1 byte username length
-            account_id, username_len = struct.unpack("!I B", header)
+            if (op_id != 4):
+                return self._log_error("LIST_ACCOUNTS Incorrect operation ID")
 
-            # Extract username
-            username = self.socket.recv(username_len).decode("utf-8")
-            accounts.append((account_id, username))
+            accounts = []
+            for _ in range(num_accounts):
+                header = self.socket.recv(5) # First 5 bytes: 4 byte account ID + 1 byte username length
+                print("Header:", header)
+ 
+                if len(header) < 5:
+                    self._log_error("LIST_ACCOUNTS Invalid response from server")
+                    continue
+
+                account_id, username_len = struct.unpack("!I B", header)
+
+                # Extract username
+                username = self.socket.recv(username_len).decode("utf-8")
+                print("Username:", username)
+                accounts.append((account_id, username))
         
         print(f"[ACCOUNTS] Retrieved {num_accounts} accounts")
+
+        # Update pagination offset IDs
+        # TODO: Is this offset behavior correct? How do we handle prev/next pagination? Or are we only going forward?
+        if accounts:
+            self.last_offset_account_id = accounts[-1][0]
         return accounts
     
     def send_message(self, recipient, message):
@@ -279,7 +300,7 @@ class ChatClient:
             response = self._send_json_request("REQUEST_MESSAGES", {"maximum_number": self.max_msg}, error_message="Could not retrieve messages")
             message_data = response["payload"]["messages"]
             messages = [(message["message_id"], message["sender"], message["message"]) for message in message_data]
-            print(f"[MESSAGES] Retrieved {len(messages)} messages")
+            # print(f"[MESSAGES] Retrieved {len(messages)} messages")
             return messages
             
         # Else, use custom protocol
@@ -292,6 +313,11 @@ class ChatClient:
         messages = []
         for _ in range(num_messages):
             header = self.socket.recv(7) # Expected response: 4 byte message ID + 1 byte sender length + 2 byte message length
+
+            if len(header) < 7:
+                self._log_error("REQUEST_MESSAGES Invalid response from server")
+                continue
+
             message_id, sender_len, message_len = struct.unpack("!I B H", header)
 
             # Extract sender and message
@@ -304,7 +330,7 @@ class ChatClient:
             if self.message_callback:
                 self.message_callback(f"{sender}: {message}")
 
-        print (f"[MESSAGES] Retrieved {num_messages} messages")
+        # print (f"[MESSAGES] Retrieved {num_messages} messages")
         return messages
     
     def delete_message(self, message_ids):

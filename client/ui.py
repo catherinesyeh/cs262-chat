@@ -126,13 +126,21 @@ class ChatUI:
         if login:
             # Log in to the existing account
             print("[DEBUG] Logging in")
-            success, unread_count = self.client.login(username, password)
+            result = self.client.login(username, password)
+            if isinstance(result, tuple): # If sucess, result will be a tuple
+                success, unread_count = result
+            else:
+                success, unread_count = result, None
             print(f"[DEBUG] Login result: {success}, {unread_count}")
             self.root.after(0, lambda: self.handle_login_result(success, unread_count))
         else:
             # Create a new account
             print("[DEBUG] Creating account")
-            success, _ = self.client.create_account(username, password)
+            result = self.client.create_account(username, password)
+            if isinstance(result, tuple): # If success, result will be a tuple
+                success, _ = result
+            else:
+                success = result
             print(f"[DEBUG] Account creation result: {success}")
             self.root.after(0, lambda: self.handle_account_creation_result(success))
 
@@ -148,7 +156,7 @@ class ChatUI:
             print("[DEBUG] Calling create_chat")
             self.create_chat_screen()
         else:
-            messagebox.showerror("Login Failed", unread_count)
+            messagebox.showerror("Login Failed", "Invalid username or password. Please try again.")
 
     def handle_account_creation_result(self, success):
         """
@@ -161,7 +169,7 @@ class ChatUI:
             print("[DEBUG] Calling create_chat")
             self.create_chat_screen()
         else:
-            messagebox.showerror("Error", "Failed to create an account.")
+            messagebox.showerror("Error", "Failed to create an account. Please try again.")
 
     ### CHAT SCREEN WORKFLOW ###
     def create_chat_screen(self):
@@ -249,7 +257,7 @@ class ChatUI:
         """
         search_text = self.user_search.get().strip()
 
-        users = self.client.list_accounts(self.current_user_page * self.client.max_users, search_text)
+        users = self.client.list_accounts(search_text)
 
         # Schedule an update to the user list
         self.root.after(0, lambda: self.update_user_list(users))

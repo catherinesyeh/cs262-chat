@@ -1,7 +1,7 @@
 package edu.harvard.Data;
 
 public class Data {
-  // Internal data types
+  // Internal data types (stored in database)
   public static class Account {
     public int id;
     public String username;

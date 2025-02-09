@@ -1,5 +1,6 @@
 package edu.harvard.Logic;
 
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.harvard.Data.Protocol;
 import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.Message;
 
@@ -24,11 +26,20 @@ public class Database {
   // Optimization for getting unread messages
   private Map<Integer, ArrayList<Integer>> unreadMessagesPerAccount;
 
+  // Sockets for currently logged in users.
+  public class SocketWithProtocol {
+    Socket socket;
+    Protocol protocol;
+  }
+
+  private Map<Integer, SocketWithProtocol> registeredSockets;
+
   public Database() {
     accountMap = new HashMap<>();
     accountUsernameMap = new HashMap<>();
     messageMap = new HashMap<>();
     unreadMessagesPerAccount = new HashMap<>();
+    registeredSockets = new HashMap<>();
   }
 
   public synchronized Account lookupAccount(int id) {
@@ -37,6 +48,14 @@ public class Database {
 
   public synchronized Account lookupAccountByUsername(String username) {
     return accountMap.get(accountUsernameMap.get(username));
+  }
+
+  public synchronized void registerSocket(int id, SocketWithProtocol socket) {
+    registeredSockets.put(id, socket);
+  }
+
+  public synchronized SocketWithProtocol getSocket(int id) {
+    return registeredSockets.get(id);
   }
 
   /*
@@ -61,20 +80,19 @@ public class Database {
    * Adds a message to the database.
    * If message.read is false, also adds it to a user's unread list.
    */
-  public synchronized void createMessage(Message message) {
+  public synchronized int createMessage(Message message) {
     Integer next_id = messageMap.size() == 0 ? 1 : Collections.max(messageMap.keySet()) + 1;
     message.id = next_id;
     messageMap.put(next_id, message);
     if (!message.read) {
       List<Integer> unreads = unreadMessagesPerAccount.get(message.recipient_id);
       if (unreads != null) {
-        System.out.println(next_id);
         unreads.add(next_id);
       } else {
-        System.out.println(message.recipient_id);
         unreadMessagesPerAccount.put(message.recipient_id, new ArrayList<>(Arrays.asList(next_id)));
       }
     }
+    return next_id;
   }
 
   public synchronized int getUnreadMessageCount(int user_id) {
@@ -83,6 +101,10 @@ public class Database {
       return 0;
     }
     return unreads.size();
+  }
+
+  public synchronized Message getMessage(int id) {
+    return messageMap.get(id);
   }
 
   /*

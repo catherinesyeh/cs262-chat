@@ -1,10 +1,17 @@
 package edu.harvard.Data;
 
 import java.io.InputStream;
+import java.util.List;
 
+import edu.harvard.Data.Data.Account;
 import edu.harvard.Data.Data.AccountLookupResponse;
+import edu.harvard.Data.Data.MessageResponse;
 
+/*
+ * Generic protocol interface. This allows the JSON and wire protocols to be swapped easily.
+ */
 public interface Protocol {
+  // Custom exceptions, caught in AppThread to generate failure responses
   public class ParseException extends Exception {
     public ParseException(String errorMessage) {
       super(errorMessage);
@@ -93,6 +100,14 @@ public interface Protocol {
   public byte[] generateLoginResponse(boolean success, int unread_messages);
 
   public byte[] generateCreateAccountResponse(boolean success);
+
+  public byte[] generateListAccountsResponse(List<Account> accounts);
+
+  public byte[] generateSendMessageResponse(int message_id);
+
+  public byte[] generateRequestMessagesResponse(List<MessageResponse> messages);
+
+  public byte[] generateDeleteMessagesResponse(boolean success);
 
   public byte[] generateUnexpectedFailureResponse(Operation operation, String message);
 }

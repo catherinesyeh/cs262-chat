@@ -36,3 +36,13 @@ Deletion of an account marks the account as deleted. The username will remain cl
 ## Persistence
 
 There is currently no persistence support. A server crash will lose all accounts and messages, as they are stored only in memory.
+
+## Internals
+
+The server code is in the `server/app/src` directory. `main` contains all the functional classes, while `test` contains unit tests.
+
+The `Data` package primarily handles data flowing over the network (including implementations for both protocols), and also includes the definitions for the classes stored in the database.
+
+The `Logic` package contains the actual database and operation logic. These classes only handle internal data classes, and do not interact with the (JSON/wire protocol) data sent over the network - they are exactly the same no matter which protocol is used. The database is an in-memory datastore, with no persistence, and is created in `App` and shared between the threads. All methods are `synchronized` to allow for cross thread use.
+
+The `App` class does very little, beyond setting up a socket server. Most of the work is done in `AppThread`, which repeatedly pulls a request from the socket, parses it (using one of the two protocol classes), handles the request (by handing off the data to an OperationHandler), and then generates a response using the same protocol class as was used to parse the request, sending it back out over the socket.

@@ -127,8 +127,10 @@ public class OperationHandler {
         sendableMessage.id = id;
         sendableMessage.sender = sender.username;
         sendableMessage.message = request.message;
-        s.socket.getOutputStream()
-            .write(s.protocol.generateRequestMessagesResponse(Arrays.asList(sendableMessage)));
+        synchronized (s.socket) {
+          s.socket.getOutputStream()
+              .write(s.protocol.generateRequestMessagesResponse(Arrays.asList(sendableMessage)));
+        }
       } catch (IOException e) {
         m.read = false;
       }

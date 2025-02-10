@@ -157,7 +157,7 @@ _Note: No other request information is needed, as only the currently logged in a
 
 ### Response
 
-- Operation ID (1 byte integer)
+Empty payload on success.
 
 _Note: No other response information is needed; this response acknowledges successful account deletion. After deletion, the socket is no longer logged in._
 

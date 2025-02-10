@@ -59,3 +59,11 @@ The database system should have everything needed to handle the remaining operat
 ### (Update 4)
 
 I believe the server is approximately done! It should be able to handle every message type in both protocols. I'll be waiting for Catherine to work on the client some more with the server available, and then we can hopefully do some end-to-end integration testing and resolve any outstanding issues. The testing I've done so far was definitely very helpful - I found a lot of lingering bugs in my code by writing tests for the logic and for the message parsers and generators, so I wouldn't be surprised if there are a few left in the parts that are hard to test without a complete client.
+
+## February 10, 2025
+
+I met with Catherine again today after class. Things seem to be in pretty good shape - we're just about ready for Wednesday! I did notice a few issues:
+
+- A graphical issue on the client with displaying long lines of text properly
+- The server doesn't prevent users from sending themselves messages, despite synchronization possibly causing a deadlock if this occurs. (Fixed - this is now prohibited, and checked for!)
+- Pagination handling on the list accounts call was incorrect. Thank you to Catherine for informing me of this - I fixed it and added a test.

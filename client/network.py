@@ -3,7 +3,7 @@ import threading
 import bcrypt
 import struct
 import json
-
+from queue import Queue
 class ChatClient:
     """
     Handles the client-side network communication for the chat application.
@@ -25,7 +25,6 @@ class ChatClient:
         self.thread = None # Thread to listen for messages from the server
         self.use_json_protocol = use_json_protocol # Flag to indicate if JSON protocol is used (true: JSON, false: custom)
 
-        self.received_messages = [] # List of received messages
         self.max_msg = max_msg # Maximum number of messages to display
         self.max_users = max_users # Maximum number of users to display
 
@@ -71,7 +70,7 @@ class ChatClient:
                     buffer += chunk
                     while b'\n' in buffer: # Process each complete JSON message
                         message, buffer = buffer.split(b'\n', 1)
-                        self._handle_json_response(message.decode("utf-8"))
+                        threading.Thread(target=self._handle_json_response, args=(message.decode("utf-8"),), daemon=True).start()
                 else:
                     # Parse custom protocol messages
                     # Try reading first byte (operation ID) first
@@ -197,11 +196,12 @@ class ChatClient:
         :param payload: JSON payload
         """
         print("[LOOKUP] Handling JSON response...")
-        self.bcrypt_prefix = payload["bcrypt_prefix"].encode("utf-8") if payload["exists"] else None
+        exists = payload["exists"]
+        self.bcrypt_prefix = payload["bcrypt_prefix"].encode("utf-8") if exists else None
 
         # Notify UI of lookup result
         if self.message_callback:
-            self.message_callback(f"LOOKUP_USER:{payload['exists']}")
+            self.message_callback(f"LOOKUP_USER:{int(exists)}")
     
     ### (2) LOGIN
     def send_login(self, username, password):
@@ -260,18 +260,20 @@ class ChatClient:
             self.message_callback(f"LOGIN:{success}:{unread_count}")
         return success, unread_count # Return the number of unread messages if login successful
     
-    def handle_login_response_json(self, payload):
+    def handle_login_response_json(self, payload, success):
         """
         Handle the JSON response from the server for the LOGIN operation (2).
 
         :param payload: JSON payload
+        :param success: Success flag
         :return: Tuple of success flag and unread message count if login is successful, False otherwise
         """
         # Notify UI of login result
-        success = payload["success"]
-        unread_messages = payload["unread_messages"]
+        print("[LOGIN] Handling JSON response...")
+        unread_messages = payload.get("unread_messages", 0)
+        print(f"[LOGIN] Unread messages: {unread_messages}")
         if self.message_callback:
-            self.message_callback(f"LOGIN:{success}:{unread_messages}")
+            self.message_callback(f"LOGIN:{int(success)}:{unread_messages}")
         return True, unread_messages if success else False
     
     ### (3) CREATE ACCOUNT
@@ -331,7 +333,7 @@ class ChatClient:
         """
         # Notify UI of account creation result
         if self.message_callback:
-            self.message_callback(f"CREATE_ACCOUNT:{True}")
+            self.message_callback(f"CREATE_ACCOUNT:{1}") # success
             
         # Automatically login after account creation
         if self.username and self.password:
@@ -402,8 +404,9 @@ class ChatClient:
         :param payload: JSON payload
         :return: List of accounts
         """
+        print("[ACCOUNTS] Handling JSON response...")
         account_data = payload["accounts"]
-        accounts = [(account["account_id"], account["username"]) for account in account_data]
+        accounts = [(account["id"], account["username"]) for account in account_data]
         print(f"[ACCOUNTS] Retrieved {len(accounts)} accounts")
 
         if self.message_callback: # Notify UI of user list update
@@ -461,7 +464,7 @@ class ChatClient:
         print(f"[MESSAGE SENT] Message ID: {message_id}")
         # Notify UI of message sent
         if self.message_callback:
-            self.message_callback(f"SEND_MESSAGE:{True}")
+            self.message_callback(f"SEND_MESSAGE:{1}") # success
         return True, message_id # Return the message ID
 
     ### (6) REQUEST MESSAGES
@@ -533,7 +536,7 @@ class ChatClient:
         :return: List of messages
         """
         message_data = payload["messages"]
-        messages = [(message["message_id"], message["sender"], message["message"]) for message in message_data]
+        messages = [(message["id"], message["sender"], message["message"]) for message in message_data]
         # print(f"[MESSAGES] Retrieved {len(messages)} messages")
         # Notify UI of received messages
         if self.message_callback:
@@ -592,7 +595,7 @@ class ChatClient:
         print(f"[MESSAGE DELETED] Messages deleted successfully")
         # Notify UI of message deletion
         if self.message_callback:
-            self.message_callback(f"DELETE_MESSAGES:{True}")
+            self.message_callback(f"DELETE_MESSAGES:{1}") # success
         return True
     
     ### (8) DELETE ACCOUNT
@@ -619,7 +622,7 @@ class ChatClient:
         print("[ACCOUNT DELETED] Account deleted successfully")
         # Notify UI of account deletion
         if self.message_callback:
-            self.message_callback(f"DELETE_ACCOUNT:{True}")
+            self.message_callback(f"DELETE_ACCOUNT:{1}") # success
         return True
     
     def handle_delete_account_response_json(self):
@@ -631,14 +634,14 @@ class ChatClient:
         print("[ACCOUNT DELETED] Account deleted successfully (JSON)")
         # Notify UI of account deletion
         if self.message_callback:
-            self.message_callback(f"DELETE_ACCOUNT:{True}")
+            self.message_callback(f"DELETE_ACCOUNT:{1}") # success
         return True
 
     ### HELPERS ###
     def _send_json_request(self, operation, payload=None):
         """
         Send a request to the server using the JSON protocol
-
+a
         :param operation: Operation name
         :param payload: Payload data
         """
@@ -646,10 +649,11 @@ class ChatClient:
             return None
     
         request = (json.dumps({"operation": operation, "payload": payload or {}}) + '\n').encode("utf-8")
+        print("[DEBUG] Sending JSON request:", request)
         self.socket.send(request)
 
     def _handle_json_response(self, message):
-        """
+        """ 
         Handle JSON responses from the server.
 
         :param message: JSON message
@@ -657,29 +661,37 @@ class ChatClient:
         """
         try:
             parsed_message = json.loads(message)
+            print("[DEBUG] Parsed message:", parsed_message)
             operation = parsed_message.get("operation")
             success = parsed_message.get("success")
+            payload = parsed_message.get("payload", {})
             if not success:
+                message = parsed_message.get("message", "")
                 # Log error message if operation failed
-                self._log_error(f"Operation {operation} failed: {parsed_message['message']}")
+                self._log_error(f"Operation {operation} failed: {message}")
 
-            # Else, get the payload data
-            payload = parsed_message.get("payload")
-            if payload is None:
-                return self._log_error(f"Operation {operation} failed: No payload found")
-            
-            # Handle the JSON response based on the operation
+            # Else, handle the JSON response based on the operation
             if operation == "LOOKUP_USER":
+                if payload is None:
+                    return self._log_error(f"Operation {operation} failed: No payload found")
                 return self.handle_lookup_account_response_json(payload)
             elif operation == "LOGIN":
-                return self.handle_login_response_json(payload)
+                if payload is None:
+                    return self._log_error(f"Operation {operation} failed: No payload found")
+                return self.handle_login_response_json(payload, success)
             elif operation == "CREATE_ACCOUNT":
                 return self.handle_create_account_response_json()
             elif operation == "LIST_ACCOUNTS":
+                if payload is None:
+                    return self._log_error(f"Operation {operation} failed: No payload found")
                 return self.handle_list_accounts_response_json(payload)
             elif operation == "SEND_MESSAGE":
+                if payload is None:
+                    return self._log_error(f"Operation {operation} failed: No payload found")
                 return self.handle_send_message_response_json(payload)
             elif operation == "REQUEST_MESSAGES":
+                if payload is None:
+                    return self._log_error(f"Operation {operation} failed: No payload found")
                 return self.handle_request_messages_response_json(payload)
             elif operation == "DELETE_MESSAGES":
                 return self.handle_delete_message_response_json()

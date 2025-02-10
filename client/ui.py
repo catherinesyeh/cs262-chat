@@ -282,7 +282,7 @@ class ChatUI:
         tk.Button(self.chat_frame, text="New Message", command=self.open_new_message_window).pack(pady=10)
 
         self.load_user_list()
-        self.load_messages()
+        self.root.after(0, self.load_messages)  # Load messages asynchronously
 
     ### LIST ACCOUNTS WORKFLOW ###
     def load_user_list(self):
@@ -305,6 +305,7 @@ class ChatUI:
         else: # If search text is the same, increment offset to last user ID
             self.client.last_offset_account_id = self.all_users[-1][0] if self.all_users else 0
 
+        print(f"[DEBUG] Fetching users with search text: {search_text}")
         self.client.send_list_accounts(search_text)
 
     def update_user_list(self, users):
@@ -373,6 +374,7 @@ class ChatUI:
         """
         Fetch messages.
         """
+        print("[DEBUG] Fetching messages")
         self.client.send_request_messages()
 
     def update_messages(self, messages):

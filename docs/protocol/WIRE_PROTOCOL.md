@@ -157,9 +157,9 @@ _Note: No other request information is needed, as only the currently logged in a
 
 ### Response
 
-Empty payload on success.
+No response.
 
-_Note: No other response information is needed; this response acknowledges successful account deletion. After deletion, the socket is no longer logged in._
+_Note: After deletion, the socket is closed by the server without sending a response.._
 
 ## Failure (Operation ID 255)
 

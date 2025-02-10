@@ -25,6 +25,8 @@ Messages: 65535 characters (2^16-1)
 
 ## Message delivery
 
+You cannot send a message to yourself.
+
 Only the delivery of new/unread messages is supported by the protocol, but all messages are stored. Once a message has been delivered, it is marked as read and will not be redelivered.
 
 When a message is sent to a currently logged in user, it will be automatically delivered. Automatic message deliveries will only be sent to the most recently logged in socket per user, if a user has multiple open sockets.

@@ -194,4 +194,6 @@ Empty payload. No other request information is needed, as only the currently log
 
 ### Response
 
-Empty payload on success. No other response information is needed; this response acknowledges successful account deletion. After deletion, the socket is no longer logged in.
+No response.
+
+_Note: After deletion, the socket is closed by the server without sending a response.._

@@ -94,6 +94,9 @@ public class OperationHandler {
       if (include) {
         list.add(account);
       }
+      if (list.size() >= request.maximum_number) {
+        break;
+      }
     }
     return list;
   }
@@ -108,6 +111,9 @@ public class OperationHandler {
     Account account = db.lookupAccountByUsername(request.recipient);
     if (account == null) {
       throw new HandleException("Recipient does not exist!");
+    }
+    if (account.id == sender_id) {
+      throw new HandleException("You cannot message yourself!");
     }
     // Build Message
     Message m = new Message();

@@ -46,6 +46,7 @@ public class OperationHandlerTest {
       listRequest1.filter_text = "";
       List<Account> accountList = handler.listAccounts(listRequest1);
       assertEquals(accountList.get(0).username, u1.username);
+      assertEquals(1, accountList.size());
       ListAccountsRequest listRequest2 = new ListAccountsRequest();
       listRequest2.maximum_number = 1;
       listRequest2.offset_account_id = 1;
@@ -63,6 +64,14 @@ public class OperationHandlerTest {
       msg.recipient = "catherine";
       msg.message = "Hi!";
       assertEquals(1, handler.sendMessage(1, msg));
+      SendMessageRequest msg2 = new SendMessageRequest();
+      msg2.recipient = "june";
+      msg2.message = "Hi!";
+      assertThrows(HandleException.class, () -> handler.sendMessage(1, msg2));
+      SendMessageRequest msg3 = new SendMessageRequest();
+      msg3.recipient = "unknown";
+      msg3.message = "Hi!";
+      assertThrows(HandleException.class, () -> handler.sendMessage(1, msg3));
       // Receive a message
       LoginResponse login2 = handler.login(u2);
       assertEquals(1, login2.unread_messages);

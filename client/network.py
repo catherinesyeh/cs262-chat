@@ -3,7 +3,6 @@ import threading
 import bcrypt
 import struct
 import json
-from queue import Queue
 class ChatClient:
     """
     Handles the client-side network communication for the chat application.

@@ -295,7 +295,7 @@ class ChatUI:
             new_width = self.chat_display.winfo_width() - 60  # Adjust based on padding/margins
             self.message_wrap_length = max(new_width, 200)  # Ensure a minimum width
             print(f"[DEBUG] Resizing message wrap length to {self.message_wrap_length}")
-            
+
             # Throttle frequent updates using `after()`
             if hasattr(self, "resize_after_id"):
                 self.root.after_cancel(self.resize_after_id)
@@ -312,11 +312,14 @@ class ChatUI:
                     widget.config(wraplength=self.message_wrap_length)
 
     ### LIST ACCOUNTS WORKFLOW ###
-    def load_user_list(self):
+    def load_user_list(self, reset_pages=True):
         """
         Start a thread to fetch and display users.
+
+        :param reset_pages: Whether to reset the current page to 0
         """
-        self.current_user_page = 0 # Reset to first page when loading users
+        if reset_pages:
+            self.current_user_page = 0 # Reset to first page when loading users
         threading.Thread(target=self.fetch_users, daemon=True).start()
 
     def fetch_users(self):
@@ -334,6 +337,22 @@ class ChatUI:
 
         print(f"[DEBUG] Fetching users with search text: {search_text}")
         self.client.send_list_accounts(search_text)
+
+    def handle_user_results(self, users):
+        """
+        Handle the results of a list accounts request.
+
+        :param users: The list of users to display
+        """
+        if len(users) == 0:
+            # show message that no users found
+            messagebox.showinfo("No Users Found", "No more users to load.")
+            return
+        # Else increment current page if needed
+        if len(self.all_users) > 0:
+            self.current_user_page += 1
+        # Then update the user list UI
+        self.update_user_list(users)
 
     def update_user_list(self, users):
         """
@@ -362,8 +381,7 @@ class ChatUI:
         # Update pagination buttons
         self.prev_user_button.config(state=tk.NORMAL if self.current_user_page > 0 else tk.DISABLED)
 
-        total_pages = math.ceil(len(self.all_users) / self.client.max_users) # Calculate total pages
-        self.next_user_button.config(state=tk.NORMAL if self.current_user_page < total_pages - 1 else tk.DISABLED)
+        # Next button is always enabled to allow users to load more accounts
 
         # Force focus back to user list
         self.user_listbox.focus_set()
@@ -380,9 +398,11 @@ class ChatUI:
         
         total_pages = math.ceil(len(self.all_users) / self.client.max_users) # Calculate total pages
         if new_page >= total_pages:
+            # request more users
+            self.load_user_list(reset_pages=False)
             return
         
-        self.current_user_page = new_page
+        self.current_user_page = new_page # Update current page
         print(f"Changing user page to {self.current_user_page}")
         self.update_user_list([])
 
@@ -687,7 +707,7 @@ class ChatUI:
             self.root.after(0, lambda: self.handle_account_creation_result(success))
         elif message.startswith("LIST_ACCOUNTS"): # OP 4
             users = json.loads(message.split(":", 1)[1])
-            self.root.after(0, lambda: self.update_user_list(users))
+            self.root.after(0, lambda: self.handle_user_results(users))
         elif message.startswith("REQUEST_MESSAGES"): # OP 5
             messages = json.loads(message.split(":", 1)[1])
             self.root.after(0, lambda: self.update_messages(messages))

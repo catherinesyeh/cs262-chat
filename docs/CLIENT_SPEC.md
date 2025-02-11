@@ -33,12 +33,13 @@ The client provides a simple graphical interface with these key views:
   - Sidebar with searchable list of users
     - Sorted into pages that the user can navigate between, with a max of `MAX_USERS_TO_DISPLAY` messages on each page
       (editable in `config.json`)
+      - Older users (who joined first) are listed at the top
       - Note: the "next page" button is always enabled here to allow users to request more accounts. The user will see an alert if no more accounts are available.
-  - List of unread messages, ordered by most recent first
+  - List of unread messages
     - Sorted into pages that the user can navigate between, with a max of `MAX_MSG_TO_DISPLAY` messages on each page
       (editable in `config.json`)
-      - Newer messages are shown at the top to mirror existing chat applications.
-      - In this case, the "older messages" button is enabled when the number of unread messages > `MAX_MSG_TO_DISPLAY` (and the user is not on the last page).
+      - Older messages are shown at the top to display messages in the order they were sent
+      - In this case, the "newer messages" button is enabled when the number of unread messages > `MAX_MSG_TO_DISPLAY` (and the user is not on the last page).
     - User can select message(s) to delete
   - Settings toolbar
     - User can delete their account here **OR**

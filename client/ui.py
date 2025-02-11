@@ -263,12 +263,12 @@ class ChatUI:
         self.pagination_frame = tk.Frame(self.button_container)
         self.pagination_frame.pack(side=tk.LEFT)
 
-        self.prev_msg_button = tk.Button(self.pagination_frame, text="Newer Messages", 
+        self.prev_msg_button = tk.Button(self.pagination_frame, text="Older Messages", 
                                         command=lambda: self.change_msg_page(-1), 
                                         state=tk.DISABLED)
         self.prev_msg_button.pack(side=tk.LEFT, padx=5)
 
-        self.next_msg_button = tk.Button(self.pagination_frame, text="Older Messages", 
+        self.next_msg_button = tk.Button(self.pagination_frame, text="Newer Messages", 
                                         command=lambda: self.change_msg_page(1), 
                                         state=tk.NORMAL if len(self.all_messages) > self.unread_count else tk.DISABLED)
         self.next_msg_button.pack(side=tk.LEFT, padx=5)
@@ -430,11 +430,9 @@ class ChatUI:
 
         :param messages: The list of messages to display
         """
-        sorted_messages = sorted(messages, key=lambda x: x[0], reverse=True) # Sort by message ID, descending
-        
         # Make sure only messages with new IDs are added
-        new_messages = [msg for msg in sorted_messages if msg[0] not in self.all_messages]
-        self.all_messages = new_messages + self.all_messages  # Append to existing messages
+        new_messages = [msg for msg in messages if msg[0] not in self.all_messages]
+        self.all_messages += new_messages  # Append to existing messages
 
         visible_messages = self.all_messages[self.current_msg_page * self.client.max_msg:(self.current_msg_page + 1) * self.client.max_msg]
 

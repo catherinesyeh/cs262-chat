@@ -137,7 +137,9 @@ public class Database {
     Message m = messageMap.get(id);
     if (m != null) {
       // Integer cast ensures the correct variant of remove is used
-      unreadMessagesPerAccount.get(m.recipient_id).remove((Integer) id);
+      if (!m.read) {
+        unreadMessagesPerAccount.get(m.recipient_id).remove((Integer) id);
+      }
       messageMap.remove(id);
     }
   }

@@ -56,6 +56,8 @@ cd tests
 poetry run pytest
 ```
 
+- Integration tests: [integration_tests.py](tests/integration_tests.py)
+
 ## Documentation
 
 More comprehensive internal documentation (including engineering notebooks) is in the [docs/](docs/) folder.

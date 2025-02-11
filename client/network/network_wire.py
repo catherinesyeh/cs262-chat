@@ -62,7 +62,7 @@ class WireChatClient(ChatClient):
 
         :param username: Username to lookup
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
             
         message = struct.pack("!B B", 1, len(username)) + username.encode("utf-8")
         self.socket.send(message)
@@ -105,7 +105,7 @@ class WireChatClient(ChatClient):
         :param username: Username to login
         :param password: Password to login
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
 
         hashed_password = self.get_hashed_password_for_login(username, password)
 
@@ -148,7 +148,9 @@ class WireChatClient(ChatClient):
         :param username: Username to create
         :param password: Password to create
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
+
+        print("[CREATE ACCOUNT] Creating account for", username)
     
         hashed_password = self.generate_hashed_password_for_create(username, password)
 
@@ -186,7 +188,7 @@ class WireChatClient(ChatClient):
 
         :param filter_text: Filter text to search for
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         # Determine the offset ID based on the direction user wants to go
         offset_id = self.last_offset_account_id
@@ -239,7 +241,7 @@ class WireChatClient(ChatClient):
         :param recipient: Recipient of the message
         :param message: Message to send
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         message_bytes = message.encode("utf-8")
         request = struct.pack("!B B", 5, len(recipient)) + recipient.encode("utf-8")
@@ -272,7 +274,7 @@ class WireChatClient(ChatClient):
         """
         OPERATION 6: Request unread messages from the server (REQUEST_MESSAGES).
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         self.socket.send(struct.pack("!B B", 6, self.max_msg)) # Request up to max messages
 
@@ -330,7 +332,7 @@ class WireChatClient(ChatClient):
 
         :param message_ids: List of message IDs to delete
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         num_messages = len(message_ids)
         if num_messages == 0:
@@ -367,7 +369,7 @@ class WireChatClient(ChatClient):
         """
         OPERATION 8: Delete the account from the server (DELETE_ACCOUNT).
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         print("[ACCOUNT DELETION] Deleting account...")
         request = struct.pack("!B", 8)

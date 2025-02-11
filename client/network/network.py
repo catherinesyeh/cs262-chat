@@ -169,12 +169,17 @@ class ChatClient(ABC):
         print(f"[ERROR] {message}")
         return return_value
     
-    def check_not_connected_error(self):
+    def is_not_connected(self):
         """
         Helper method to log a "not connected to server" error.
+
+        :return: True if not connected, False otherwise
         """
-        if not self.running:
-            return self.log_error("Not connected to server")
+        if not self.running or self.socket is None:
+            self.log_error("Not connected to server")
+            self.close()
+            return True
+        return False
     
     ### MISC HELPER FUNCTIONS ###
     def get_hashed_password_for_login(self, username, password):

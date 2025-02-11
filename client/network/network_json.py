@@ -45,7 +45,7 @@ class JSONChatClient(ChatClient):
 
         :param username: Username to lookup
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
             
         self.send_json_request("LOOKUP_USER", {"username": username})
     
@@ -72,7 +72,7 @@ class JSONChatClient(ChatClient):
         :param username: Username to login
         :param password: Password to login
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
 
         hashed_password = self.get_hashed_password_for_login(username, password)
 
@@ -103,7 +103,7 @@ class JSONChatClient(ChatClient):
         :param username: Username to create
         :param password: Password to create
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
     
         hashed_password = self.generate_hashed_password_for_create(username, password)
 
@@ -130,7 +130,7 @@ class JSONChatClient(ChatClient):
 
         :param filter_text: Filter text to search for
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         # Determine the offset ID based on the direction user wants to go
         offset_id = self.last_offset_account_id
@@ -163,7 +163,7 @@ class JSONChatClient(ChatClient):
         :param recipient: Recipient of the message
         :param message: Message to send
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         self.send_json_request("SEND_MESSAGE", {"recipient": recipient, "message": message})
     
@@ -186,7 +186,7 @@ class JSONChatClient(ChatClient):
         """
         OPERATION 6: Request unread messages from the server (REQUEST_MESSAGES).
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         self.send_json_request("REQUEST_MESSAGES", {"maximum_number": self.max_msg})
 
@@ -212,7 +212,7 @@ class JSONChatClient(ChatClient):
 
         :param message_ids: List of message IDs to delete
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         num_messages = len(message_ids)
         if num_messages == 0:
@@ -237,7 +237,7 @@ class JSONChatClient(ChatClient):
         """
         OPERATION 8: Delete the account from the server (DELETE_ACCOUNT).
         """
-        self.check_not_connected_error()
+        if self.is_not_connected(): return
         
         print("[ACCOUNT DELETION] Deleting account...")
         self.send_json_request("DELETE_ACCOUNT")

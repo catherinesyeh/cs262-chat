@@ -8,8 +8,6 @@ All client-related files are in the [client/](../client/) folder.
 - [config.py](../client/config.py): Reads in details from config file to initialize client
 - [network.py](../client/network.py): Handles the client-side network communication for the chat application
   (implementing all required operations for the assignment on the client's side)
-  - [mock_network](../client/mock_network.py): A mock version of `network.py` that doesn't require a server
-    (for testing purposes only)
 - [ui.py](../client/ui.py): Handles the user interface for the chat application
 
 ## Connection handling
@@ -27,19 +25,22 @@ or the JSON protocol is used.
 The client provides a simple graphical interface with these key views:
 
 - **Login screen:** where the user enters their username and password to create an account or login.
-- **Chat window:**
+- **Chat window:** shows up once the user logs in.
   - Sidebar with searchable list of users
-    - Sorted into pages that the user can navigate between, with `MAX_USERS_TO_DISPLAY` messages on each page
+    - Sorted into pages that the user can navigate between, with a max of `MAX_USERS_TO_DISPLAY` messages on each page
       (editable in `config.json`)
-    - Each user's status (active or inactive) is displayed
-  - List of messages, ordered by most recent first
-    - Sorted into pages that the user can navigate between, with `MAX_MSG_TO_DISPLAY` messages on each page
+  - List of unread messages, ordered by most recent first
+    - Sorted into pages that the user can navigate between, with a max of `MAX_MSG_TO_DISPLAY` messages on each page
       (editable in `config.json`)
-    - Message status (read or unread) is displayed
     - User can select message(s) to delete
-  - Message window
-    - Displays currently message user is reading **OR**
-    - New message user is composing to send to someone else.
   - Settings toolbar
     - User can delete their account here **OR**
     - Log out of their account
+- **New message window:** opens when the user presses the _New Message_ button. This is where the user can compose a message to someone else.
+  - Valid recipients are all other existing users in the system, other than the user themselves (as specified in the [SERVER_SPEC](SERVER_SPEC.md), the user cannot send a message to themselves by design).
+
+## Error handling
+
+Popup alerts will be displayed to the user in the UI if the system encounters an error (e.g., wrong credentials entered, invalid or empty recipient/message, etc.).
+
+- These are also handled programatically by [network.py](../client/network.py).

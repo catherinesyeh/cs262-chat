@@ -40,12 +40,6 @@ cd client
 poetry run python client.py
 ```
 
-- To test without server, add the `-test` flag:
-
-```
-poetry run python client.py -test
-```
-
 ### Client Testing
 
 **Note: under construction right now**

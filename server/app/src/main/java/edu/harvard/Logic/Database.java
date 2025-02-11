@@ -27,9 +27,9 @@ public class Database {
   private Map<Integer, ArrayList<Integer>> unreadMessagesPerAccount;
 
   // Sockets for currently logged in users.
-  public class SocketWithProtocol {
-    Socket socket;
-    Protocol protocol;
+  public static class SocketWithProtocol {
+    public Socket socket;
+    public Protocol protocol;
   }
 
   private Map<Integer, SocketWithProtocol> registeredSockets;

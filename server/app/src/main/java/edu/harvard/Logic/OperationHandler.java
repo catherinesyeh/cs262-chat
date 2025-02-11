@@ -124,7 +124,7 @@ public class OperationHandler {
     int id = db.createMessage(m);
     // Auto-send message if possible
     Database.SocketWithProtocol s = db.getSocket(account.id);
-    if (s == null) {
+    if (s == null || !s.socket.isConnected()) {
       m.read = false;
     } else {
       m.read = true;

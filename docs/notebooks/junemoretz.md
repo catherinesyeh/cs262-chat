@@ -67,3 +67,7 @@ I met with Catherine again today after class. Things seem to be in pretty good s
 - A graphical issue on the client with displaying long lines of text properly
 - The server doesn't prevent users from sending themselves messages, despite synchronization possibly causing a deadlock if this occurs. (Fixed - this is now prohibited, and checked for!)
 - Pagination handling on the list accounts call was incorrect. Thank you to Catherine for informing me of this - I fixed it and added a test.
+
+## February 11, 2025
+
+Almost everything seems to be in working order, but I had managed to overlook properly setting up the global socket mapping that's needed to auto-deliver messages to logged in recipients. This has now been fixed! Glad I tested this properly before demo day.

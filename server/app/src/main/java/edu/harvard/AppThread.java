@@ -42,35 +42,35 @@ public class AppThread extends Thread {
   public void run() {
     System.out.println("New connection from " + socket.getInetAddress().toString());
     while (true) {
-      synchronized (socket) {
-        int firstByte = 0;
-        Protocol protocol = null;
+      int firstByte = 0;
+      Protocol protocol = null;
+      try {
+        // Choose a protocol layer: JSON or wire
+        firstByte = socket.getInputStream().read();
+        if (firstByte == -1) {
+          socket.close();
+          break;
+        }
+
+        if (firstByte == 123) {
+          // First byte is {, parse as JSON request
+          protocol = new JSONProtocol();
+        } else {
+          protocol = new WireProtocol();
+        }
+
+        // Parse the request
+        Request request;
         try {
-          // Choose a protocol layer: JSON or wire
-          firstByte = socket.getInputStream().read();
-          if (firstByte == -1) {
-            socket.close();
-            break;
-          }
+          request = protocol.parseRequest(firstByte, socket.getInputStream());
+        } catch (Protocol.ParseException e) {
+          socket.getOutputStream()
+              .write(protocol.generateUnexpectedFailureResponse(Operation.UNKNOWN, e.getMessage()));
+          continue;
+        }
 
-          if (firstByte == 123) {
-            // First byte is {, parse as JSON request
-            protocol = new JSONProtocol();
-          } else {
-            protocol = new WireProtocol();
-          }
-
-          // Parse the request
-          Request request;
-          try {
-            request = protocol.parseRequest(firstByte, socket.getInputStream());
-          } catch (Protocol.ParseException e) {
-            socket.getOutputStream()
-                .write(protocol.generateUnexpectedFailureResponse(Operation.UNKNOWN, e.getMessage()));
-            continue;
-          }
-
-          // Handle the request
+        // Handle the request
+        synchronized (socket) {
           try {
             OperationHandler handler = new OperationHandler(db);
             switch (request.operation) {
@@ -82,6 +82,10 @@ public class AppThread extends Thread {
                 LoginResponse loginResponse = handler.login((LoginCreateRequest) request.payload);
                 if (loginResponse.success) {
                   this.logged_in_account = loginResponse.account_id;
+                  Database.SocketWithProtocol sp = new Database.SocketWithProtocol();
+                  sp.socket = socket;
+                  sp.protocol = protocol;
+                  db.registerSocket(loginResponse.account_id, sp);
                 }
                 socket.getOutputStream()
                     .write(protocol.generateLoginResponse(loginResponse.success, loginResponse.unread_messages));
@@ -90,6 +94,10 @@ public class AppThread extends Thread {
                 int id = handler.createAccount((LoginCreateRequest) request.payload);
                 if (id != 0) {
                   this.logged_in_account = id;
+                  Database.SocketWithProtocol sp = new Database.SocketWithProtocol();
+                  sp.socket = socket;
+                  sp.protocol = protocol;
+                  db.registerSocket(id, sp);
                 }
                 socket.getOutputStream()
                     .write(protocol.generateCreateAccountResponse(id != 0));
@@ -142,19 +150,19 @@ public class AppThread extends Thread {
                 .write(protocol.generateUnexpectedFailureResponse(request.operation, e.getMessage()));
             continue;
           }
-        } catch (IOException e) {
-          try {
-            socket.close();
-          } catch (IOException e2) {
-          }
-          System.err.println("Unexpected I/O error in main thread:");
-          if (protocol != null) {
-            protocol.generateUnexpectedFailureResponse(Operation.codeToOperation(firstByte),
-                "Unexpected error in handling request!");
-          }
-          e.printStackTrace();
-          break;
         }
+      } catch (IOException e) {
+        try {
+          socket.close();
+        } catch (IOException e2) {
+        }
+        System.err.println("Unexpected I/O error in main thread:");
+        if (protocol != null) {
+          protocol.generateUnexpectedFailureResponse(Operation.codeToOperation(firstByte),
+              "Unexpected error in handling request!");
+        }
+        e.printStackTrace();
+        break;
       }
     }
   }

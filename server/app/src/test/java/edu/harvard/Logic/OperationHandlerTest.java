@@ -79,11 +79,13 @@ public class OperationHandlerTest {
       assertEquals(1, m.id);
       assertEquals("june", m.sender);
       assertEquals(msg.message, m.message);
-      // Send another message
-      assertEquals(2, handler.sendMessage(1, msg));
       // Delete it
-      assertEquals(false, handler.deleteMessages(3, Arrays.asList(2)));
-      assertEquals(true, handler.deleteMessages(1, Arrays.asList(2)));
+      assertEquals(true, handler.deleteMessages(2, Arrays.asList(1)));
+      // Send another message
+      assertEquals(1, handler.sendMessage(1, msg));
+      // Delete it
+      assertEquals(false, handler.deleteMessages(3, Arrays.asList(1)));
+      assertEquals(true, handler.deleteMessages(1, Arrays.asList(1)));
       // Verify that this worked
       assertEquals(0, handler.requestMessages(2, 5).size());
       // Delete an account

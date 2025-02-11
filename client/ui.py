@@ -278,11 +278,38 @@ class ChatUI:
                                         command=self.delete_selected_messages, 
                                         state=tk.DISABLED)
         self.delete_msg_button.pack(side=tk.RIGHT)
+
         # "New Message" button
         tk.Button(self.chat_frame, text="New Message", command=self.open_new_message_window).pack(pady=10)
 
+        self.root.bind("<Configure>", self.on_resize) # Bind resize event
+
         self.load_user_list()
         self.root.after(0, self.load_messages)  # Load messages asynchronously
+    
+    def on_resize(self, event=None):
+        """
+        Adjust message width based on window size.
+        """
+        if hasattr(self, "chat_display"):
+            new_width = self.chat_display.winfo_width() - 60  # Adjust based on padding/margins
+            self.message_wrap_length = max(new_width, 200)  # Ensure a minimum width
+            print(f"[DEBUG] Resizing message wrap length to {self.message_wrap_length}")
+            
+            # Throttle frequent updates using `after()`
+            if hasattr(self, "resize_after_id"):
+                self.root.after_cancel(self.resize_after_id)
+
+            self.resize_after_id = self.root.after(0, self.update_message_widths)
+
+    def update_message_widths(self):
+        """
+        Update the wrap length of existing message labels without reloading messages.
+        """
+        for frame in self.chat_display.winfo_children():
+            for widget in frame.winfo_children():
+                if isinstance(widget, tk.Label):
+                    widget.config(wraplength=self.message_wrap_length)
 
     ### LIST ACCOUNTS WORKFLOW ###
     def load_user_list(self):
@@ -411,7 +438,7 @@ class ChatUI:
             cb = tk.Checkbutton(frame, variable=var)
             cb.pack(side=tk.LEFT)
 
-            lbl = tk.Label(frame, text=f"{sender}: {message}", anchor="w", justify="left")
+            lbl = tk.Label(frame, text=f"{sender}: {message}", anchor="w", justify="left", wraplength=self.message_wrap_length)
             lbl.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
             # Bind double click to fill recipient

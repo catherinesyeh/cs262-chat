@@ -6,8 +6,10 @@ All client-related files are in the [client/](../client/) folder.
 
 - [client.py](../client/client.py): Main program to run chat client
 - [config.py](../client/config.py): Reads in details from config file to initialize client
-- [network.py](../client/network.py): Handles the client-side network communication for the chat application
-  (implementing all required operations for the assignment on the client's side)
+- [network/](../client/network/): Folder containing classes for handling the client-side network communication for the chat application (implementing all required operations for the assignment on the client's side)
+  - [network.py](../client/network/network.py): Contains base class (`ChatClient`) with shared behavior + abstract methods for sending requests/handling responses from the server
+  - [network_wire.py](../client/network/network_wire.py): Subclass of `ChatClient` that handles network communication with a custom wire protocol
+  - [network_json.py](../client/network/network_json.py): Subclass of `ChatClient` that handles network communication with a JSON protocol
 - [ui.py](../client/ui.py): Handles the user interface for the chat application
 
 ## Connection handling
@@ -19,6 +21,8 @@ The connection is specified via a configuration file: e.g., [config_example.json
 
 The user can set the `USE_JSON_PROTOCOL` flag in `config.json` to determine whether the custom wire protocol
 or the JSON protocol is used.
+
+- The correct `ChatClient` subclass (`WireChatClient` or `JSONChatClient`) will be selected and used automatically based on this flag.
 
 ## User interface
 

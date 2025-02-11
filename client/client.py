@@ -1,8 +1,8 @@
 import config
-from network import ChatClient
 from ui import ChatUI
 import tkinter as tk
-import sys
+from network.network_json import JSONChatClient
+from network.network_wire import WireChatClient
 
 def main():
     print("Starting client...")
@@ -15,7 +15,12 @@ def main():
 
     # Set up a ChatClient instance and connect to the server
     print(f"Configuration: \nhost={host}, \nport={port}, \nmax_msg={max_msg}, \nmax_users={max_users}, \nuse_json_protocol={use_json_protocol}")
-    client = ChatClient(host, port, max_msg, max_users, use_json_protocol)
+    
+    # Create a client based on the protocol
+    if use_json_protocol: 
+        client = JSONChatClient(host, port, max_msg, max_users)
+    else:
+        client = WireChatClient(host, port, max_msg, max_users)
 
     # Start the user interface, passing in existing client
     root = tk.Tk()

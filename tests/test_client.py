@@ -4,10 +4,13 @@ import os
 import pytest
 
 # Add project root to sys.path
+print("sys path before: ", sys.path)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+print("sys path after: ", sys.path)
 
 from client import config
-from client.network import ChatClient
+from client.network.network_json import JSONChatClient
+from client.network.network_wire import WireChatClient
 
 # -----------------------------------------------------------------------------
 # Global Variables
@@ -37,8 +40,13 @@ def sender_client():
     max_msg = client_config["max_msg"]
     max_users = client_config["max_users"]
     use_json_protocol = client_config["use_json_protocol"]
-    client = ChatClient(host, port, max_msg, max_users, use_json_protocol)
     print(f"Configuration: \nhost={host}, \nport={port}, \nmax_msg={max_msg}, \nmax_users={max_users}, \nuse_json_protocol={use_json_protocol}")
+
+    # Create a client based on the protocol
+    if use_json_protocol: 
+        client = JSONChatClient(host, port, max_msg, max_users)
+    else:
+        client = WireChatClient(host, port, max_msg, max_users)
     
     yield client
 
@@ -55,9 +63,14 @@ def receiver_client():
     max_msg = client_config["max_msg"]
     max_users = client_config["max_users"]
     use_json_protocol = client_config["use_json_protocol"]
-    client = ChatClient(host, port, max_msg, max_users, use_json_protocol)
     print(f"Configuration: \nhost={host}, \nport={port}, \nmax_msg={max_msg}, \nmax_users={max_users}, \nuse_json_protocol={use_json_protocol}")
     
+    # Create a client based on the protocol
+    if use_json_protocol:
+        client = JSONChatClient(host, port, max_msg, max_users)
+    else:
+        client = WireChatClient(host, port, max_msg, max_users)
+
     yield client
 
     client.close()

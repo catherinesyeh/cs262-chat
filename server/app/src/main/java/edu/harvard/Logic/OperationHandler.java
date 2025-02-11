@@ -120,14 +120,17 @@ public class OperationHandler {
     m.message = request.message;
     m.recipient_id = account.id;
     m.sender_id = sender_id;
-    // Add message to database
-    int id = db.createMessage(m);
+    int id;
     // Auto-send message if possible
     Database.SocketWithProtocol s = db.getSocket(account.id);
     if (s == null || !s.socket.isConnected()) {
       m.read = false;
+      // Add message to database
+      id = db.createMessage(m);
     } else {
       m.read = true;
+      // Add message to database
+      id = db.createMessage(m);
       try {
         MessageResponse sendableMessage = new MessageResponse();
         sendableMessage.id = id;
@@ -138,6 +141,7 @@ public class OperationHandler {
               .write(s.protocol.generateRequestMessagesResponse(Arrays.asList(sendableMessage)));
         }
       } catch (IOException e) {
+        System.out.println(e.getMessage());
         m.read = false;
       }
     }

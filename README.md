@@ -42,8 +42,6 @@ poetry run python client.py
 
 ### Client Testing
 
-**Note: under construction right now**
-
 1. Navigate into [tests](tests) folder:
 
 ```
@@ -56,6 +54,8 @@ cd tests
 poetry run pytest
 ```
 
+- Client JSON protocol tests: [test_client_wire.py](tests/test_client_wire.py)
+- Client JSON protocol tests: [test_client_json.py](tests/test_client_json.py)
 - Integration tests: [test_integration.py](tests/test_integration.py)
 
 ## Documentation

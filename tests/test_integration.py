@@ -70,7 +70,7 @@ def write_to_log(test_name, protocol_type, bytes_received, bytes_sent, time_elap
             f"Total bytes received: {bytes_received}\n\n"
         )
     
-    log_file = os.path.join(LOG_DIR, f"{protocol_type}.log")
+    log_file = os.path.join(LOG_DIR, f"integration_metrics_{protocol_type}.log")
     with open(log_file, "a") as f:
         f.write(log_message)
 

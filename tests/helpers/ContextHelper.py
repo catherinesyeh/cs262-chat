@@ -10,12 +10,16 @@ class ContextHelper:
     def clear(self):
         self.messages = []
         self.accounts = []
+        self.msg_sent = False
         self.msg_deleted = False
     
     def message_callback(self, msg):
         print(f"[CALLBACK] Received message: {msg}")
 
-        if msg.startswith("REQUEST_MESSAGES:"):
+        if msg.startswith("SEND_MESSAGE:"):
+            success = int(msg.split(":")[1])
+            self.msg_sent = success == 1
+        elif msg.startswith("REQUEST_MESSAGES:"):
             msg_data = json.loads(msg.split(":", 1)[1])
             self.messages = msg_data
         elif msg.startswith("LIST_ACCOUNTS:"):

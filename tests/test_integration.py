@@ -1,3 +1,4 @@
+import socket
 import time 
 import sys
 import os
@@ -175,13 +176,14 @@ def test_list_accounts(test_context):
 
 def test_send_receive_message(test_context):
     """
-    Test if the client can send and receive messages.
+    Test if the client can send and receive messages (synchronously).
 
     :param test_context: TestContext instance
     """
     with client_connection() as sender, client_connection() as receiver:
         # Set up the receiver
         receiver.start_listener(test_context.message_callback)
+        sender.start_listener(test_context.message_callback)
 
         # Create sender account
         sender.send_create_account("test_sender", "test_password")
@@ -191,28 +193,41 @@ def test_send_receive_message(test_context):
         receiver.send_create_account("test_receiver", "test_password")
         time.sleep(1)
 
-        # Send message from sender to receiver
+        # Send message from sender to receiver while receiver is logged in
         sender.send_message("test_receiver", "Hello, world!")
         time.sleep(1)
-
-        # Request messages for receiver
-        receiver.send_request_messages()
 
         # Check if message was received
         def check_message():
             print("(1) Test context messages: ", test_context.messages)
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == "Hello, world!"
         
-        assert wait_for_condition(check_message), "Message not received in time"
+        assert wait_for_condition(check_message), "(1) Sync message not received in time"
 
-        # Try sending multiple messages
+        # Log out receiver
+        receiver.close()
+        time.sleep(1)
+
+        # Send multiple messages from sender to receiver while receiver is logged out
         num_messages = 3
+        receiver.max_msg = num_messages - 1
+
         for i in range(num_messages):
             sender.send_message("test_receiver", f"Message {i}")
             time.sleep(1)
+            assert test_context.msg_sent == True, "Message not sent"
+            time.sleep(1)
+            test_context.msg_sent = False
 
-        receiver.max_msg = num_messages - 1
-        
+        # Restart the receiver
+        receiver.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        receiver.connect()
+        receiver.start_listener(test_context.message_callback)
+
+        # Log in receiver
+        receiver.send_login("test_receiver", "test_password")
+        time.sleep(1)
+
         # Request messages for receiver
         receiver.send_request_messages()
 
@@ -220,7 +235,7 @@ def test_send_receive_message(test_context):
         def check_messages():
             return len(test_context.messages) == receiver.max_msg and all([msg[1] == "test_sender" for msg in test_context.messages])
         
-        assert wait_for_condition(check_messages), "Messages not received in time"
+        assert wait_for_condition(check_messages), "(2) Async messages not received in time"
 
         # Get the last message
         receiver.send_request_messages()
@@ -254,7 +269,7 @@ def test_delete_message(test_context):
         time.sleep(1)
 
         # Request messages for receiver
-        receiver.send_request_messages()
+        # receiver.send_request_messages()
 
         # Check if message was received
         def check_message():

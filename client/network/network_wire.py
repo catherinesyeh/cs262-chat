@@ -219,9 +219,7 @@ class WireChatClient(ChatClient):
             self.message_callback(f"CREATE_ACCOUNT:{success}")
 
         # Automatically login after account creation
-        if self.username and self.password:
-            self.send_login(self.username, self.password)
-        else:
+        if not self.username and self.password:
             self.log_error("Username and password not set")
 
     # (4) LIST ACCOUNTS

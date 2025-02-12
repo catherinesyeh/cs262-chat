@@ -54,9 +54,11 @@ cd tests
 poetry run pytest
 ```
 
-- Client JSON protocol tests: [test_client_wire.py](tests/test_client_wire.py)
-- Client JSON protocol tests: [test_client_json.py](tests/test_client_json.py)
-- Integration tests: [test_integration.py](tests/test_integration.py)
+- Client JSON protocol tests: [tests/test_client_wire.py](tests/test_client_wire.py)
+- Client JSON protocol tests: [tests/test_client_json.py](tests/test_client_json.py)
+- Integration tests: [tests/test_integration.py](tests/test_integration.py)
+  - Note: These tests expect a clean database, so we suggest restarting the server before running them.
+  - The integration tests will also log metrics to the [tests/logs/](tests/logs/) directory.
 
 ## Documentation
 

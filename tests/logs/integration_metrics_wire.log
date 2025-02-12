@@ -1,35 +1,60 @@
 [TEST METRICS] test_lookup_nonexistent_user
-Time taken: 2.009 seconds
+Time taken: 2.012 seconds
 Total bytes sent: 10
 Total bytes received: 0
 
 [TEST METRICS] test_create_account
-Time taken: 3.273 seconds
+Time taken: 3.258 seconds
 Total bytes sent: 81
 Total bytes received: 0
 
 [TEST METRICS] test_login
-Time taken: 3.248 seconds
+Time taken: 3.284 seconds
 Total bytes sent: 81
 Total bytes received: 0
 
 [TEST METRICS] test_list_accounts
-Time taken: 6.512 seconds
-Total bytes sent: 298
-Total bytes received: 61
+Time taken: 6.524 seconds
+Total bytes sent: 162
+Total bytes received: 53
 
 [TEST METRICS] test_send_receive_message
-Time taken: 15.051 seconds
-Total bytes sent: 1505
-Total bytes received: 1184
+Time taken: 15.029 seconds
+Total bytes sent: 1355
+Total bytes received: 1176
 
 [TEST METRICS] test_delete_message
-Time taken: 6.508 seconds
-Total bytes sent: 268
-Total bytes received: 42
+Time taken: 6.700 seconds
+Total bytes sent: 191
+Total bytes received: 38
 
 [TEST METRICS] test_delete_account
-Time taken: 3.271 seconds
+Time taken: 3.269 seconds
 Total bytes sent: 83
+Total bytes received: 0
+
+[TEST METRICS] test_lookup_nonexistent_user
+Time taken: 2.008 seconds
+Total bytes sent: 10
+Total bytes received: 0
+
+[TEST METRICS] test_create_account
+Time taken: 3.268 seconds
+Total bytes sent: 81
+Total bytes received: 0
+
+[TEST METRICS] test_login
+Time taken: 3.260 seconds
+Total bytes sent: 81
+Total bytes received: 0
+
+[TEST METRICS] test_list_accounts
+Time taken: 6.543 seconds
+Total bytes sent: 162
+Total bytes received: 53
+
+[TEST METRICS] test_lookup_nonexistent_user
+Time taken: 2.012 seconds
+Total bytes sent: 10
 Total bytes received: 0
 

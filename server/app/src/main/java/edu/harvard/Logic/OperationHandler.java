@@ -123,7 +123,7 @@ public class OperationHandler {
     int id;
     // Auto-send message if possible
     Database.SocketWithProtocol s = db.getSocket(account.id);
-    if (s == null || !s.socket.isConnected()) {
+    if (s == null || s.socket.isClosed()) {
       m.read = false;
       // Add message to database
       id = db.createMessage(m);

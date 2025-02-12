@@ -20,8 +20,9 @@ Pagination is currently only used for listing accounts, as messages are implicit
 
 ## Maximum Lengths
 
-Usernames: 255 characters (2^8-1)
-Messages: 65535 characters (2^16-1)
+**Usernames:** 255 characters (2^8-1)
+
+**Messages:** 65535 characters (2^16-1)
 
 ## Message delivery
 

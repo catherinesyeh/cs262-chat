@@ -13,6 +13,10 @@ from client import config
 from client.network.network_json import JSONChatClient
 from client.network.network_wire import WireChatClient
 
+# Create a logs directory
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
@@ -24,7 +28,7 @@ def test_context():
     return ContextHelper()
 
 @contextmanager
-def client_connection(my_json_protocol=None):
+def client_connection():
     """
     Set up a ChatClient instance and connect to the server.
     """
@@ -33,7 +37,7 @@ def client_connection(my_json_protocol=None):
     port = client_config["port"]
     max_msg = client_config["max_msg"]
     max_users = client_config["max_users"]
-    use_json_protocol = client_config["use_json_protocol"] if my_json_protocol is None else my_json_protocol
+    use_json_protocol = client_config["use_json_protocol"]
 
     # Create a client based on the protocol
     if use_json_protocol:
@@ -58,6 +62,19 @@ def wait_for_condition(condition_func, timeout=5, interval=0.1):
         time.sleep(interval)
     return False
 
+def write_to_log(test_name, protocol_type, bytes_received, bytes_sent, time_elapsed):
+    log_message = (
+            f"[TEST METRICS] {test_name}\n"
+            f"Time taken: {time_elapsed:.3f} seconds\n"
+            f"Total bytes sent: {bytes_sent}\n"
+            f"Total bytes received: {bytes_received}\n\n"
+        )
+    
+    log_file = os.path.join(LOG_DIR, f"{protocol_type}.log")
+    with open(log_file, "a") as f:
+        f.write(log_message)
+
+
 # -----------------------------------------------------------------------------
 # Tests
 # -----------------------------------------------------------------------------
@@ -72,6 +89,7 @@ def test_lookup_nonexistent_user():
     """
     Test if the client can lookup a user that does not exist.
     """
+    start_time = time.time()
     username = "new_user"
 
     with client_connection() as sender_client:
@@ -79,11 +97,18 @@ def test_lookup_nonexistent_user():
         time.sleep(1)
 
         assert sender_client.bcrypt_prefix is None, "Lookup should fail for nonexistent user"
+        bytes_sent = sender_client.bytes_sent
+        bytes_received = sender_client.bytes_received
+        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_lookup_nonexistent_user", protocol_type, bytes_received, bytes_sent, time_elapsed)
 
 def test_create_account():
     """
     Test if the client can create an account.
     """
+    start_time = time.time()
     username = "new_user"
     password = "new_password"
 
@@ -97,11 +122,18 @@ def test_create_account():
         time.sleep(1)
 
         assert sender_client.bcrypt_prefix is not None, "Lookup should succeed for created user"
+        bytes_sent = sender_client.bytes_sent
+        bytes_received = sender_client.bytes_received
+        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
+    
+    time_elapsed = time.time() - start_time
+    write_to_log("test_create_account", protocol_type, bytes_received, bytes_sent, time_elapsed)
 
 def test_login():
     """
     Test if the client can login.
     """
+    start_time = time.time()
     username = "new_user"
     password = "new_password"
 
@@ -119,6 +151,12 @@ def test_login():
             time.sleep(1)
 
         assert sender_client.username == username, "Login failed: Username not set correctly"
+        bytes_sent = sender_client.bytes_sent
+        bytes_received = sender_client.bytes_received
+        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_login", protocol_type, bytes_received, bytes_sent, time_elapsed)
 
 
 def test_list_accounts(test_context):
@@ -127,6 +165,7 @@ def test_list_accounts(test_context):
 
     :param test_context: TestContext instance
     """
+    start_time = time.time()
     with client_connection() as sender:
         # Attach the callback to capture received messages
         sender.start_listener(test_context.message_callback)
@@ -174,12 +213,20 @@ def test_list_accounts(test_context):
 
         assert usernames[0] in listed_usernames, f"New username {usernames[0]} not found in account list"
 
+        bytes_sent = sender.bytes_sent
+        bytes_received = sender.bytes_received
+        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_list_accounts", protocol_type, bytes_received, bytes_sent, time_elapsed)
+
 def test_send_receive_message(test_context):
     """
     Test if the client can send and receive messages (synchronously).
 
     :param test_context: TestContext instance
     """
+    start_time = time.time()
     with client_connection() as sender, client_connection() as receiver:
         # Set up the receiver
         receiver.start_listener(test_context.message_callback)
@@ -254,6 +301,12 @@ def test_send_receive_message(test_context):
             return len(test_context.messages) == 1 and test_context.messages[0][2] == f"Message {num_messages - 1}"
         
         assert wait_for_condition(check_last_message), "Last message not received in time"
+        bytes_sent = sender.bytes_sent + receiver.bytes_sent
+        bytes_received = sender.bytes_received + receiver.bytes_received
+        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_send_receive_message", protocol_type, bytes_received, bytes_sent, time_elapsed)
 
 def test_delete_message(test_context):
     """
@@ -261,6 +314,7 @@ def test_delete_message(test_context):
 
     :param test_context: TestContext instance
     """
+    start_time = time.time()
     with client_connection() as sender, client_connection() as receiver:
         # Set up the receiver
         receiver.start_listener(test_context.message_callback)
@@ -296,11 +350,18 @@ def test_delete_message(test_context):
             return test_context.msg_deleted
         
         assert wait_for_condition(check_deleted_message), "Message not deleted in time"
+        bytes_sent = sender.bytes_sent + receiver.bytes_sent
+        bytes_received = sender.bytes_received + receiver.bytes_received
+        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_delete_message", protocol_type, bytes_received, bytes_sent, time_elapsed)
     
 def test_delete_account():
     """
     Test if the client can delete an account.
     """
+    start_time = time.time()
     with client_connection() as sender:
         # Create account
         sender.send_create_account("test_user_to_delete", "test_password")
@@ -315,3 +376,9 @@ def test_delete_account():
 
         # Check if account was deleted
         assert wait_for_condition(check_deleted_account), "Account not deleted in time"
+        bytes_sent = sender.bytes_sent
+        bytes_received = sender.bytes_received
+        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+
+    time_elapsed = time.time() - start_time
+    write_to_log("test_delete_account", protocol_type, bytes_received, bytes_sent, time_elapsed)

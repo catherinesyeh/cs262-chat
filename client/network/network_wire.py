@@ -23,6 +23,7 @@ class WireChatClient(ChatClient):
                     self.close()
                     break
                 op_id = struct.unpack("!B", op_id)[0] # Convert to integer
+                self.bytes_received += 1
                 print("[OP ID]", op_id)
                 if op_id == 1: # LOOKUP_USER
                     self.handle_lookup_account_response()
@@ -65,6 +66,7 @@ class WireChatClient(ChatClient):
         if self.is_not_connected(): return
             
         message = struct.pack("!B B", 1, len(username)) + username.encode("utf-8")
+        self.bytes_sent += len(message)
         self.socket.send(message)
     
     def handle_lookup_account_response(self):
@@ -76,6 +78,8 @@ class WireChatClient(ChatClient):
         if len(response) < 1:
             return self.log_error("LOOKUP_USER Invalid response from server", None)
         
+        self.bytes_received += 1
+    
         exists = struct.unpack("!B", response)[0]
         if exists == 0:
             print("[LOOKUP] Account does not exist")
@@ -86,6 +90,8 @@ class WireChatClient(ChatClient):
             response = self.socket.recv(29) # Expected response: 29 byte bcrypt prefix
             if len(response) < 29:
                 return self.log_error("LOOKUP_USER Invalid response from server", None)
+            
+            self.bytes_received += 29
 
             print("[LOOKUP] Account exists:", exists)
 
@@ -111,6 +117,7 @@ class WireChatClient(ChatClient):
 
         message = struct.pack("!B B", 2, len(username)) + username.encode("utf-8") 
         message += struct.pack("!B", len(hashed_password)) + hashed_password
+        self.bytes_sent += len(message)
         self.socket.send(message)
     
     def handle_login_response(self):
@@ -123,6 +130,8 @@ class WireChatClient(ChatClient):
         if len(response) < 1:
             return self.log_error("LOGIN Invalid response from server", False)
         
+        self.bytes_received += 1
+        
         success = struct.unpack("!B", response)[0]
 
         if success == 0:
@@ -132,6 +141,7 @@ class WireChatClient(ChatClient):
             response = self.socket.recv(2) # Expected response: 2 byte unread message count
             if len(response) < 2:
                 return self.log_error("LOGIN Invalid response from server", False)
+            self.bytes_received += 2
             unread_count = struct.unpack("!H", response)[0]
         
         # Notify UI of login result
@@ -156,6 +166,7 @@ class WireChatClient(ChatClient):
 
         message = struct.pack("!B B", 3, len(username)) + username.encode("utf-8")
         message += struct.pack("!B", len(hashed_password)) + hashed_password
+        self.bytes_sent += len(message)
         self.socket.send(message)
     
     def handle_create_account_response(self):
@@ -165,6 +176,8 @@ class WireChatClient(ChatClient):
         response = self.socket.recv(1) # Expected response: 1 byte success
         if len(response) < 1:
             return self.log_error("CREATE_ACCOUNT Invalid response from server")
+        
+        self.bytes_received += 1
         
         success = struct.unpack("!B", response)[0]
 
@@ -197,6 +210,7 @@ class WireChatClient(ChatClient):
         
         message = struct.pack("!B B I B", 4, self.max_users, offset_id, len(filter_text))
         message += filter_text.encode("utf-8")
+        self.bytes_sent += len(message)
         self.socket.send(message)
 
     def handle_list_accounts_response(self):
@@ -209,6 +223,8 @@ class WireChatClient(ChatClient):
         if len(response) < 1:
             return self.log_error("LIST_ACCOUNTS Invalid response from server")
         
+        self.bytes_received += 1
+        
         num_accounts = struct.unpack("!B", response)[0]
 
         accounts = []
@@ -219,10 +235,13 @@ class WireChatClient(ChatClient):
                 self.log_error("LIST_ACCOUNTS Invalid response from server")
                 continue
 
+            self.bytes_received += 5
+
             account_id, username_len = struct.unpack("!I B", header)
 
             # Extract username
             username = self.socket.recv(username_len).decode("utf-8")
+            self.bytes_received += username_len
             print("Username:", username)
             accounts.append((account_id, username))
         
@@ -246,6 +265,7 @@ class WireChatClient(ChatClient):
         message_bytes = message.encode("utf-8")
         request = struct.pack("!B B", 5, len(recipient)) + recipient.encode("utf-8")
         request += struct.pack("!H", len(message_bytes)) + message_bytes
+        self.bytes_sent += len(request)
         self.socket.send(request)
     
     def handle_send_message_response(self):
@@ -257,6 +277,8 @@ class WireChatClient(ChatClient):
         response = self.socket.recv(5) # Expected response: 1 byte success + 4 byte message ID
         if len(response) < 5:
             return self.log_error("SEND_MESSAGE Invalid response from server", False)
+        
+        self.bytes_received += 5
         
         success, message_id = struct.unpack("!B I", response)
 
@@ -275,8 +297,9 @@ class WireChatClient(ChatClient):
         OPERATION 6: Request unread messages from the server (REQUEST_MESSAGES).
         """
         if self.is_not_connected(): return
-        
-        self.socket.send(struct.pack("!B B", 6, self.max_msg)) # Request up to max messages
+        message = struct.pack("!B B", 6, self.max_msg)  # Request up to max messages
+        self.bytes_sent += len(message)
+        self.socket.send(message)
 
     def handle_request_messages_response(self):
         """
@@ -288,6 +311,8 @@ class WireChatClient(ChatClient):
         if len(response) < 1:
             return self.log_error("REQUEST_MESSAGES Invalid response from server")
         
+        self.bytes_received += 1
+        
         num_messages = struct.unpack("!B", response)[0]
         print(f"[MESSAGES] Received {num_messages} messages")
 
@@ -298,21 +323,26 @@ class WireChatClient(ChatClient):
             if len(id_header) < 4:
                 self.log_error("REQUEST_MESSAGES Invalid response from server")
                 continue
+            self.bytes_received += 4
             message_id = struct.unpack("!I", id_header)[0]
 
             sender_header = self.socket.recv(1) # Expected response: 1 byte sender length
             if len(sender_header) < 1:
                 self.log_error("REQUEST_MESSAGES Invalid response from server")
                 continue
+            self.bytes_received += 1
             sender_len = struct.unpack("!B", sender_header)[0]
             sender = self.socket.recv(sender_len).decode("utf-8")
+            self.bytes_received += sender_len
 
             message_header = self.socket.recv(2) # Expected response: 2 byte message length
             if len(message_header) < 2:
                 self.log_error("REQUEST_MESSAGES Invalid response from server")
                 continue
+            self.bytes_received += 2
             message_len = struct.unpack("!H", message_header)[0]
             message = self.socket.recv(message_len).decode("utf-8")
+            self.bytes_received += message_len
 
             print(f"[DEBUG] Sender: {sender}, Message: {message}")
 
@@ -341,6 +371,7 @@ class WireChatClient(ChatClient):
         request = struct.pack("!B B", 7, num_messages)
         for message_id in message_ids:
             request += struct.pack("!I", message_id)
+        self.bytes_sent += len(request)
         self.socket.send(request)
 
     def handle_delete_message_response(self):
@@ -353,6 +384,8 @@ class WireChatClient(ChatClient):
         if len(response) < 1:
             return self.log_error("DELETE_MESSAGES Invalid response from server", False)
             
+        self.bytes_received += 1
+
         success = struct.unpack("!B", response)[0]
 
         if success == 0:
@@ -373,6 +406,7 @@ class WireChatClient(ChatClient):
         
         print("[ACCOUNT DELETION] Deleting account...")
         request = struct.pack("!B", 8)
+        self.bytes_sent += 1
         self.socket.send(request)
 
     def handle_delete_account_response(self):

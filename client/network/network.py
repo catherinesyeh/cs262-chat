@@ -31,6 +31,10 @@ class ChatClient(ABC):
         self.username = None # Username of the client
         self.password = None # Password of the client
         self.message_callback = None # Callback function to handle received messages
+
+        self.bytes_sent = 0 # Number of bytes sent
+        self.bytes_received = 0 # Number of bytes received
+
         print("[INITIALIZED] Client initialized")
         self.connect()
     

@@ -263,6 +263,7 @@ a
         :param payload: Payload data
         """
         request = (json.dumps({"operation": operation, "payload": payload or {}}) + '\n').encode("utf-8")
+        self.bytes_sent += len(request)
         print("[DEBUG] Sending JSON request:", request)
         self.socket.send(request)
 
@@ -273,6 +274,7 @@ a
         :param message: JSON message
         :return: True if the message is handled successfully, False otherwise
         """
+        self.bytes_received += len(message)
         try:
             parsed_message = json.loads(message)
             print("[DEBUG] Parsed message:", parsed_message)

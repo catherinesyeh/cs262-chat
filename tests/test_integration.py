@@ -199,10 +199,20 @@ def test_send_receive_message(test_context):
 
         # Check if message was received
         def check_message():
-            print("(1) Test context messages: ", test_context.messages)
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == "Hello, world!"
         
         assert wait_for_condition(check_message), "(1) Sync message not received in time"
+
+        # Test long message
+        long_message = "a" * 1000
+        sender.send_message("test_receiver", long_message)
+        time.sleep(1)
+
+        # Check if long message was received
+        def check_long_message():
+            return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == long_message
+
+        assert wait_for_condition(check_long_message), "(2) Sync long message not received in time"
 
         # Log out receiver
         receiver.close()
@@ -235,13 +245,12 @@ def test_send_receive_message(test_context):
         def check_messages():
             return len(test_context.messages) == receiver.max_msg and all([msg[1] == "test_sender" for msg in test_context.messages])
         
-        assert wait_for_condition(check_messages), "(2) Async messages not received in time"
+        assert wait_for_condition(check_messages), "(3) Async messages not received in time"
 
         # Get the last message
         receiver.send_request_messages()
 
         def check_last_message():
-            print("(2) Test context messages: ", test_context.messages)
             return len(test_context.messages) == 1 and test_context.messages[0][2] == f"Message {num_messages - 1}"
         
         assert wait_for_condition(check_last_message), "Last message not received in time"
@@ -268,10 +277,8 @@ def test_delete_message(test_context):
         sender.send_message("test_receiver1", "Hello, world!")
         time.sleep(1)
 
-        # Request messages for receiver
-        # receiver.send_request_messages()
-
-        # Check if message was received
+        # Check if message was received 
+        # (should automatically be received by the receiver since they are logged in)
         def check_message():
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender1" and test_context.messages[0][2] == "Hello, world!"
         

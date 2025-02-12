@@ -11,7 +11,6 @@ class ContextHelper:
         self.messages = []
         self.accounts = []
         self.msg_deleted = False
-        self.deleted_account = False
     
     def message_callback(self, msg):
         print(f"[CALLBACK] Received message: {msg}")
@@ -25,6 +24,3 @@ class ContextHelper:
         elif msg.startswith("DELETE_MESSAGES:"):
             success = int(msg.split(":")[1])
             self.msg_deleted = success == 1
-        elif msg.startswith("DELETE_ACCOUNT:"):
-            success = int(msg.split(":")[1])
-            self.deleted_account = success == 1

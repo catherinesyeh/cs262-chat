@@ -56,7 +56,7 @@ cd tests
 poetry run pytest
 ```
 
-- Integration tests: [integration_tests.py](tests/integration_tests.py)
+- Integration tests: [test_integration.py](tests/test_integration.py)
 
 ## Documentation
 

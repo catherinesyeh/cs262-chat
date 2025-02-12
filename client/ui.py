@@ -1,6 +1,6 @@
 import math
 import tkinter as tk
-from tkinter import messagebox, scrolledtext 
+from tkinter import messagebox
 import threading
 import json
 

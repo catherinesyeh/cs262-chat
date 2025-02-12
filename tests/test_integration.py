@@ -200,6 +200,7 @@ def test_send_receive_message(test_context):
 
         # Check if message was received
         def check_message():
+            print("(1) Test context messages: ", test_context.messages)
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == "Hello, world!"
         
         assert wait_for_condition(check_message), "Message not received in time"
@@ -225,6 +226,7 @@ def test_send_receive_message(test_context):
         receiver.send_request_messages()
 
         def check_last_message():
+            print("(2) Test context messages: ", test_context.messages)
             return len(test_context.messages) == 1 and test_context.messages[0][2] == f"Message {num_messages - 1}"
         
         assert wait_for_condition(check_last_message), "Last message not received in time"

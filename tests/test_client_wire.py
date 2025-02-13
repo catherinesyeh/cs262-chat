@@ -35,22 +35,6 @@ def mock_client():
         return client
 
 
-@pytest.fixture(scope="function")
-def mock_client_with_listener():
-    client_config = config.get_config()
-    host = client_config["host"]
-    port = client_config["port"]
-    max_msg = client_config["max_msg"]
-    max_users = client_config["max_users"]
-    with patch.object(WireChatClient, 'connect', return_value=True):
-        # prevent actual connection to the server
-        client = WireChatClient(host, port, max_msg, max_users)
-        client.socket = MagicMock()
-        client.running = True
-        client.message_callback = MagicMock()
-        client.start_listener(client.message_callback)
-        return client
-
 ### BASIC TESTS ###
 
 

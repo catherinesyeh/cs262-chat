@@ -55,9 +55,12 @@ poetry run pytest
 ```
 
 - Client JSON protocol tests: [tests/test_client_wire.py](tests/test_client_wire.py)
+  - Note: server does not need to be running.
 - Client JSON protocol tests: [tests/test_client_json.py](tests/test_client_json.py)
+  - Note: server does not need to be running.
 - Integration tests: [tests/test_integration.py](tests/test_integration.py)
-  - Note: These tests expect a clean database, so we suggest restarting the server before running them.
+  - Note: These tests do require the server and expect a clean database, so we suggest restarting the server before running them.
+  - To test with each protocol, change the `USE_JSON_PROTOCOL` flag in your `config.json` file.
   - The integration tests will also log metrics to the [tests/logs/](tests/logs/) directory.
 
 ## Documentation

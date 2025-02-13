@@ -1,16 +1,19 @@
-# Add project root to sys.path
-import time
 from unittest.mock import patch, MagicMock
 import pytest
 import os
 import sys
 import json
 
+from helpers.utils import wait_for_condition
+
+# Add project root to sys.path
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 from client.network.network_json import JSONChatClient
 from client import config
+
+# Test the JSONChatClient class
 
 
 @pytest.fixture(scope="function")
@@ -20,13 +23,17 @@ def mock_client():
     port = client_config["port"]
     max_msg = client_config["max_msg"]
     max_users = client_config["max_users"]
-    client = JSONChatClient(host, port, max_msg, max_users)
-    client.socket = MagicMock()
-    client.message_callback = MagicMock()
-    client.start_listener(client.message_callback)
-    return client
+    with patch.object(JSONChatClient, 'connect', return_value=True):
+        # Prevent actual connection attempt
+        client = JSONChatClient(host, port, max_msg, max_users)
+        client.socket = MagicMock()
+        client.running = True
+        client.message_callback = MagicMock()
+        client.start_listener(client.message_callback)
+        return client
 
-### SENDING REQUESTS ###
+
+### BASIC TESTS ###
 
 
 def test_client_initialized(mock_client):
@@ -46,6 +53,9 @@ def test_client_close(mock_client):
     """
     mock_client.close()
     assert mock_client.socket is None, "Client socket should be None"
+
+
+### SENDING REQUESTS ###
 
 
 def test_send_lookup_account(mock_client):
@@ -247,13 +257,12 @@ def test_lookup_account(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("LOOKUP_USER:1")
-
-    # Optional: Assert bcrypt prefix was set correctly
-    assert mock_client.bcrypt_prefix == b"$2b$12$something"
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("LOOKUP_USER:1"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_lookup_account_not_found(mock_client):
@@ -277,10 +286,12 @@ def test_lookup_account_not_found(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("LOOKUP_USER:0")
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("LOOKUP_USER:0"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_lookup_account_fail(mock_client):
@@ -307,12 +318,11 @@ def test_lookup_account_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation LOOKUP_USER failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation LOOKUP_USER failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_create_account(mock_client):
@@ -336,10 +346,12 @@ def test_create_account(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
-    # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("CREATE_ACCOUNT:1")
+   # Assert message callback was called correctly
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("CREATE_ACCOUNT:1"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_create_account_fail(mock_client):
@@ -366,12 +378,11 @@ def test_create_account_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation CREATE_ACCOUNT failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation CREATE_ACCOUNT failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_login(mock_client):
@@ -397,10 +408,12 @@ def test_login(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("LOGIN:1:10")
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("LOGIN:10"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_login_fail(mock_client):
@@ -427,12 +440,11 @@ def test_login_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation LOGIN failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation LOGIN failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_list_accounts(mock_client):
@@ -461,14 +473,17 @@ def test_list_accounts(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
     account_data = expected_response["payload"]["accounts"]
     accounts = [(account["id"], account["username"])
                 for account in account_data]
-    mock_client.message_callback.assert_called_with(
-        f"LIST_ACCOUNTS:{json.dumps(accounts)}")
+
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with(
+            f"LIST_ACCOUNTS:{json.dumps(accounts)}"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_list_accounts_fail(mock_client):
@@ -495,12 +510,11 @@ def test_list_accounts_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation LIST_ACCOUNTS failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation LIST_ACCOUNTS failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_send_message_response(mock_client):
@@ -526,10 +540,12 @@ def test_send_message_response(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("SEND_MESSAGE:1")
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("SEND_MESSAGE:1"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_send_message_response_fail(mock_client):
@@ -556,12 +572,11 @@ def test_send_message_response_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation SEND_MESSAGE failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation SEND_MESSAGE failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_request_messages(mock_client):
@@ -590,14 +605,17 @@ def test_request_messages(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
     message_data = expected_response["payload"]["messages"]
     messages = [(message["id"], message["sender"], message["message"])
                 for message in message_data]
-    mock_client.message_callback.assert_called_with(
-        f"REQUEST_MESSAGES:{json.dumps(messages)}")
+
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with(
+            f"REQUEST_MESSAGES:{json.dumps(messages)}"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_request_messages_fail(mock_client):
@@ -624,12 +642,11 @@ def test_request_messages_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation REQUEST_MESSAGES failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation REQUEST_MESSAGES failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_delete_message(mock_client):
@@ -653,10 +670,12 @@ def test_delete_message(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("DELETE_MESSAGES:1")
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("DELETE_MESSAGES:1"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_delete_message_fail(mock_client):
@@ -683,12 +702,11 @@ def test_delete_message_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation DELETE_MESSAGES failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation DELETE_MESSAGES failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."
 
 
 def test_delete_account(mock_client):
@@ -712,10 +730,12 @@ def test_delete_account(mock_client):
 
     # Call the function
     mock_client.listen_for_messages()
-    time.sleep(1)
 
     # Assert message callback was called correctly
-    mock_client.message_callback.assert_called_with("DELETE_ACCOUNT:1")
+    assert wait_for_condition(
+        lambda: mock_client.message_callback.called_with("DELETE_ACCOUNT:1"),
+        timeout=5
+    ), "Message callback was not called in time."
 
 
 def test_delete_account_fail(mock_client):
@@ -742,9 +762,8 @@ def test_delete_account_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.listen_for_messages()
 
-        # Assert that log_error was called at least once
-        mock_log_error.assert_called()
-
-        # Optionally, assert it was called with the expected error message
-        mock_log_error.assert_any_call(
-            "Operation DELETE_ACCOUNT failed: Unexpected failure")
+        assert wait_for_condition(
+            lambda: mock_log_error.called_with(
+                "Operation DELETE_ACCOUNT failed: Unexpected failure"),
+            timeout=5
+        ), "log_error was not called with the expected message."

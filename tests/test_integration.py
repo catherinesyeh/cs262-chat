@@ -1,31 +1,32 @@
 import socket
-import time 
+import time
 import sys
 import os
 import pytest
 from contextlib import contextmanager
 from helpers.ContextHelper import ContextHelper
+from helpers.utils import wait_for_condition, write_to_log
 
 # Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
 from client import config
 from client.network.network_json import JSONChatClient
 from client.network.network_wire import WireChatClient
 
-# Create a logs directory
-LOG_DIR = "logs"
-os.makedirs(LOG_DIR, exist_ok=True)
-
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
+
+
 @pytest.fixture(scope="function")
 def test_context():
     """
     Set up a TestContext instance.
     """
     return ContextHelper()
+
 
 @contextmanager
 def client_connection():
@@ -49,30 +50,7 @@ def client_connection():
         yield client
     finally:
         client.close()
-        time.sleep(1) # Wait for server to close connection
-    
-def wait_for_condition(condition_func, timeout=5, interval=0.1):
-    """
-    Wait for a condition to be met.
-    """
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if condition_func():
-            return True
-        time.sleep(interval)
-    return False
-
-def write_to_log(test_name, protocol_type, bytes_received, bytes_sent, time_elapsed):
-    log_message = (
-            f"[TEST METRICS] {test_name}\n"
-            f"Time taken: {time_elapsed:.3f} seconds\n"
-            f"Total bytes sent: {bytes_sent}\n"
-            f"Total bytes received: {bytes_received}\n\n"
-        )
-    
-    log_file = os.path.join(LOG_DIR, f"integration_metrics_{protocol_type}.log")
-    with open(log_file, "a") as f:
-        f.write(log_message)
+        time.sleep(1)  # Wait for server to close connection
 
 
 # -----------------------------------------------------------------------------
@@ -84,6 +62,7 @@ def test_server_connection():
     """
     with client_connection() as client:
         assert client.running == True, "Client failed to connect to server"
+
 
 def test_lookup_nonexistent_user():
     """
@@ -99,10 +78,13 @@ def test_lookup_nonexistent_user():
         assert sender_client.bcrypt_prefix is None, "Lookup should fail for nonexistent user"
         bytes_sent = sender_client.bytes_sent
         bytes_received = sender_client.bytes_received
-        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender_client, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_lookup_nonexistent_user", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_lookup_nonexistent_user", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
+
 
 def test_create_account():
     """
@@ -124,10 +106,13 @@ def test_create_account():
         assert sender_client.bcrypt_prefix is not None, "Lookup should succeed for created user"
         bytes_sent = sender_client.bytes_sent
         bytes_received = sender_client.bytes_received
-        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
-    
+        protocol_type = "json" if isinstance(
+            sender_client, JSONChatClient) else "wire"
+
     time_elapsed = time.time() - start_time
-    write_to_log("test_create_account", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_create_account", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
+
 
 def test_login():
     """
@@ -146,17 +131,19 @@ def test_login():
         if sender_client.bcrypt_prefix is None:
             sender_client.send_create_account(username, password)
             time.sleep(1)
-        else: # Login
+        else:  # Login
             sender_client.send_login(username, password)
             time.sleep(1)
 
         assert sender_client.username == username, "Login failed: Username not set correctly"
         bytes_sent = sender_client.bytes_sent
         bytes_received = sender_client.bytes_received
-        protocol_type = "json" if isinstance(sender_client, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender_client, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_login", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_login", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
 
 
 def test_list_accounts(test_context):
@@ -179,7 +166,7 @@ def test_list_accounts(test_context):
         for username in usernames:
             sender.send_create_account(username, password)
             time.sleep(1)
-        
+
         # Request the list of accounts
         sender.send_list_accounts()
         time.sleep(1)
@@ -187,7 +174,8 @@ def test_list_accounts(test_context):
         # Check if the returned accounts contain the created users
         listed_usernames = [account[1] for account in test_context.accounts]
 
-        assert len(listed_usernames) == sender.max_users, "List of accounts should be equal to max_users"
+        assert len(
+            listed_usernames) == sender.max_users, "List of accounts should be equal to max_users"
 
         # Send another request
         sender.last_offset_account_id = sender.max_users
@@ -196,11 +184,12 @@ def test_list_accounts(test_context):
 
         # Check if returned account ids are correct
         ids = [account[0] for account in test_context.accounts]
-        assert len(listed_usernames) == sender.max_users, "List of accounts should be equal to max_users"
+        assert len(
+            listed_usernames) == sender.max_users, "List of accounts should be equal to max_users"
 
         for id in ids:
             assert id > sender.last_offset_account_id, f"Account ID {id} should be greater than last_offset_account_id {sender.last_offset_account_id}"
-        
+
         # Now try filtering
         filter_text = "user1"
         sender.last_offset_account_id = 0
@@ -215,10 +204,13 @@ def test_list_accounts(test_context):
 
         bytes_sent = sender.bytes_sent
         bytes_received = sender.bytes_received
-        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_list_accounts", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_list_accounts", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
+
 
 def test_send_receive_message(test_context):
     """
@@ -247,8 +239,9 @@ def test_send_receive_message(test_context):
         # Check if message was received
         def check_message():
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == "Hello, world!"
-        
-        assert wait_for_condition(check_message), "(1) Sync message not received in time"
+
+        assert wait_for_condition(
+            check_message), "(1) Sync message not received in time"
 
         # Test long message
         long_message = "a" * 1000
@@ -259,7 +252,8 @@ def test_send_receive_message(test_context):
         def check_long_message():
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender" and test_context.messages[0][2] == long_message
 
-        assert wait_for_condition(check_long_message), "(2) Sync long message not received in time"
+        assert wait_for_condition(
+            check_long_message), "(2) Sync long message not received in time"
 
         # Log out receiver
         receiver.close()
@@ -291,22 +285,27 @@ def test_send_receive_message(test_context):
         # Check if messages were received
         def check_messages():
             return len(test_context.messages) == receiver.max_msg and all([msg[1] == "test_sender" for msg in test_context.messages])
-        
-        assert wait_for_condition(check_messages), "(3) Async messages not received in time"
+
+        assert wait_for_condition(
+            check_messages), "(3) Async messages not received in time"
 
         # Get the last message
         receiver.send_request_messages()
 
         def check_last_message():
             return len(test_context.messages) == 1 and test_context.messages[0][2] == f"Message {num_messages - 1}"
-        
-        assert wait_for_condition(check_last_message), "Last message not received in time"
+
+        assert wait_for_condition(
+            check_last_message), "Last message not received in time"
         bytes_sent = sender.bytes_sent + receiver.bytes_sent
         bytes_received = sender.bytes_received + receiver.bytes_received
-        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_send_receive_message", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_send_receive_message", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
+
 
 def test_delete_message(test_context):
     """
@@ -331,12 +330,13 @@ def test_delete_message(test_context):
         sender.send_message("test_receiver1", "Hello, world!")
         time.sleep(1)
 
-        # Check if message was received 
+        # Check if message was received
         # (should automatically be received by the receiver since they are logged in)
         def check_message():
             return len(test_context.messages) == 1 and test_context.messages[0][1] == "test_sender1" and test_context.messages[0][2] == "Hello, world!"
-        
-        assert wait_for_condition(check_message), "Message not received in time"
+
+        assert wait_for_condition(
+            check_message), "Message not received in time"
 
         # Delete the message
         receiver.send_delete_message([test_context.messages[0][0]])
@@ -348,15 +348,19 @@ def test_delete_message(test_context):
         # Check if message was deleted
         def check_deleted_message():
             return test_context.msg_deleted
-        
-        assert wait_for_condition(check_deleted_message), "Message not deleted in time"
+
+        assert wait_for_condition(
+            check_deleted_message), "Message not deleted in time"
         bytes_sent = sender.bytes_sent + receiver.bytes_sent
         bytes_received = sender.bytes_received + receiver.bytes_received
-        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_delete_message", protocol_type, bytes_received, bytes_sent, time_elapsed)
-    
+    write_to_log("test_delete_message", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)
+
+
 def test_delete_account():
     """
     Test if the client can delete an account.
@@ -375,10 +379,13 @@ def test_delete_account():
             return sender.thread is None
 
         # Check if account was deleted
-        assert wait_for_condition(check_deleted_account), "Account not deleted in time"
+        assert wait_for_condition(
+            check_deleted_account), "Account not deleted in time"
         bytes_sent = sender.bytes_sent
         bytes_received = sender.bytes_received
-        protocol_type = "json" if isinstance(sender, JSONChatClient) else "wire"
+        protocol_type = "json" if isinstance(
+            sender, JSONChatClient) else "wire"
 
     time_elapsed = time.time() - start_time
-    write_to_log("test_delete_account", protocol_type, bytes_received, bytes_sent, time_elapsed)
+    write_to_log("test_delete_account", protocol_type,
+                 bytes_received, bytes_sent, time_elapsed)

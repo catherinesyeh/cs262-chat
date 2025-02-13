@@ -70,8 +70,10 @@ class WireChatClient(ChatClient):
         if self.is_not_connected():
             return
 
+        print("[LOOKUP] Looking up account for", username)
+
         if not isinstance(username, str) or not username:
-            return self.log_error("Invalid username", None)
+            return self.log_error("Invalid username", False)
 
         message = struct.pack("!B B", 1, len(username)) + \
             username.encode("utf-8")
@@ -84,6 +86,7 @@ class WireChatClient(ChatClient):
         """
         print("[LOOKUP] Handling response...")
         response = self.socket.recv(1)  # Expected response: 1 byte exists
+        print("[LOOKUP] Response:", response)
         if len(response) < 1:
             return self.log_error("LOOKUP_USER Invalid response from server", None)
 
@@ -125,10 +128,10 @@ class WireChatClient(ChatClient):
             return
 
         if not isinstance(username, str) or not username:
-            return self.log_error("Invalid username")
+            return self.log_error("Invalid username", False)
 
         if not isinstance(password, str) or not password:
-            return self.log_error("Invalid password")
+            return self.log_error("Invalid password", False)
 
         hashed_password = self.get_hashed_password_for_login(
             username, password)
@@ -183,10 +186,10 @@ class WireChatClient(ChatClient):
             return
 
         if not isinstance(username, str) or not username:
-            return self.log_error("Invalid username")
+            return self.log_error("Invalid username", False)
 
         if not isinstance(password, str) or not password:
-            return self.log_error("Invalid password")
+            return self.log_error("Invalid password", False)
 
         print("[CREATE ACCOUNT] Creating account for", username)
 
@@ -218,9 +221,8 @@ class WireChatClient(ChatClient):
         if self.message_callback:
             self.message_callback(f"CREATE_ACCOUNT:{success}")
 
-        # Automatically login after account creation
-        if not self.username and self.password:
-            self.log_error("Username and password not set")
+        if not self.username:
+            self.log_error("Username not set")
 
     # (4) LIST ACCOUNTS
     def send_list_accounts(self, filter_text=""):
@@ -233,7 +235,7 @@ class WireChatClient(ChatClient):
             return
 
         if not isinstance(filter_text, str):
-            return self.log_error("Invalid filter text")
+            return self.log_error("Invalid filter text", False)
 
         # Determine the offset ID based on the direction user wants to go
         offset_id = self.last_offset_account_id
@@ -300,10 +302,10 @@ class WireChatClient(ChatClient):
             return
 
         if not isinstance(recipient, str) or not recipient:
-            return self.log_error("Invalid recipient")
+            return self.log_error("Invalid recipient", False)
 
         if not isinstance(message, str) or not message:
-            return self.log_error("Invalid message")
+            return self.log_error("Invalid message", False)
 
         message_bytes = message.encode("utf-8")
         request = struct.pack("!B B", 5, len(recipient)) + \

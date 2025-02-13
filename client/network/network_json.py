@@ -145,9 +145,8 @@ class JSONChatClient(ChatClient):
         if self.message_callback:
             self.message_callback(f"CREATE_ACCOUNT:{1}")  # success
 
-        # Automatically login after account creation
-        if not self.username and self.password:
-            self.log_error("Username and password not set")
+        if not self.username:
+            self.log_error("Username not set")
 
     # (4) LIST ACCOUNTS
     def send_list_accounts(self, filter_text=""):

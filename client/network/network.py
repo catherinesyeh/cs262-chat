@@ -32,7 +32,6 @@ class ChatClient(ABC):
         self.last_offset_account_id = 0  # Offset ID for pagination of accounts
         self.bcrypt_prefix = None  # Bcrypt prefix for password hashing
         self.username = None  # Username of the client
-        self.password = None  # Password of the client
         self.message_callback = None  # Callback function to handle received messages
 
         self.bytes_sent = 0  # Number of bytes sent
@@ -229,8 +228,7 @@ class ChatClient(ABC):
         hashed_password = bcrypt.hashpw(password.encode("utf-8"), salt)
         self.bcrypt_prefix = salt
 
-        # store username and password for login later
+        # store username
         self.username = username
-        self.password = password
 
         return hashed_password

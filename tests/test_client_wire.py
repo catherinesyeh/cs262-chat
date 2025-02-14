@@ -315,11 +315,8 @@ def test_lookup_account(mock_client):
 
     mock_client.handle_lookup_account_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "LOOKUP_USER:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "LOOKUP_USER:1")
 
 
 def test_lookup_account_not_found(mock_client):
@@ -339,11 +336,8 @@ def test_lookup_account_not_found(mock_client):
 
     mock_client.handle_lookup_account_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "LOOKUP_USER:0"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "LOOKUP_USER:0")
 
 
 def test_create_account(mock_client):
@@ -363,11 +357,8 @@ def test_create_account(mock_client):
 
     mock_client.handle_create_account_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "CREATE_ACCOUNT:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "CREATE_ACCOUNT:1")
 
 
 def test_create_account_failure(mock_client):
@@ -387,11 +378,8 @@ def test_create_account_failure(mock_client):
 
     mock_client.handle_create_account_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "CREATE_ACCOUNT:0"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "CREATE_ACCOUNT:0")
 
 
 def test_login(mock_client):
@@ -412,11 +400,8 @@ def test_login(mock_client):
 
     mock_client.handle_login_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "LOGIN:1:10"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "LOGIN:1:10")
 
 
 def test_login_failure(mock_client):
@@ -436,11 +421,8 @@ def test_login_failure(mock_client):
 
     mock_client.handle_login_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "LOGIN:0:0"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "LOGIN:0:0")
 
 
 def test_list_accounts(mock_client):
@@ -461,8 +443,8 @@ def test_list_accounts(mock_client):
     account2_user = b"test_user2"
 
     accounts = [
-        {"id": 1, "username": "test_user"},
-        {"id": 2, "username": "test_user2"}
+        [1, "test_user"],
+        [2, "test_user2"]
     ]
 
     # Mock `socket.recv` to return response and then terminate
@@ -471,11 +453,8 @@ def test_list_accounts(mock_client):
 
     mock_client.handle_list_accounts_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            f"LIST_ACCOUNTS:{json.dumps(accounts)}"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        f"LIST_ACCOUNTS:{json.dumps(accounts)}")
 
 
 def test_list_accounts_empty(mock_client):
@@ -495,11 +474,8 @@ def test_list_accounts_empty(mock_client):
 
     mock_client.handle_list_accounts_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "LIST_ACCOUNTS:[]"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "LIST_ACCOUNTS:[]")
 
 
 def test_send_message_response(mock_client):
@@ -519,11 +495,8 @@ def test_send_message_response(mock_client):
 
     mock_client.handle_send_message_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "SEND_MESSAGE:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "SEND_MESSAGE:1")
 
 
 def test_send_message_response_fail(mock_client):
@@ -545,11 +518,8 @@ def test_send_message_response_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.handle_send_message_response()
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "SEND_MESSAGE Invalid response from server"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "SEND_MESSAGE Invalid response from server", False)
 
 
 def test_request_messages(mock_client):
@@ -585,11 +555,8 @@ def test_request_messages(mock_client):
 
     mock_client.handle_request_messages_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            f"REQUEST_MESSAGES:{json.dumps(messages)}"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        f"REQUEST_MESSAGES:{json.dumps(messages)}")
 
 
 def test_request_messages_empty(mock_client):
@@ -609,11 +576,8 @@ def test_request_messages_empty(mock_client):
 
     mock_client.handle_request_messages_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "REQUEST_MESSAGES:[]"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "REQUEST_MESSAGES:[]")
 
 
 def test_delete_message(mock_client):
@@ -631,11 +595,8 @@ def test_delete_message(mock_client):
 
     mock_client.handle_delete_message_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "DELETE_MESSAGE:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "DELETE_MESSAGES:1")
 
 
 def test_delete_message_fail(mock_client):
@@ -655,11 +616,8 @@ def test_delete_message_fail(mock_client):
     with patch.object(mock_client, 'log_error') as mock_log_error:
         mock_client.handle_delete_message_response()
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Message deletion failed"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Message deletion failed", False)
 
 
 def test_delete_account(mock_client):
@@ -670,8 +628,5 @@ def test_delete_account(mock_client):
     """
     mock_client.handle_delete_account_response()
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            "DELETE_ACCOUNT:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        "DELETE_ACCOUNT:1")

@@ -1,3 +1,4 @@
+import time
 from unittest.mock import patch, MagicMock
 import pytest
 import os
@@ -249,20 +250,12 @@ def test_lookup_account(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("LOOKUP_USER:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("LOOKUP_USER:1")
 
 
 def test_lookup_account_not_found(mock_client):
@@ -278,20 +271,12 @@ def test_lookup_account_not_found(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("LOOKUP_USER:0"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("LOOKUP_USER:0")
 
 
 def test_lookup_account_fail(mock_client):
@@ -308,21 +293,13 @@ def test_lookup_account_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation LOOKUP_USER failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation LOOKUP_USER failed: Unexpected failure")
 
 
 def test_create_account(mock_client):
@@ -338,20 +315,12 @@ def test_create_account(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
    # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("CREATE_ACCOUNT:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("CREATE_ACCOUNT:1")
 
 
 def test_create_account_fail(mock_client):
@@ -368,21 +337,14 @@ def test_create_account_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation CREATE_ACCOUNT failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation CREATE_ACCOUNT failed: Unexpected failure")
 
 
 def test_login(mock_client):
@@ -400,20 +362,12 @@ def test_login(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("LOGIN:10"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("LOGIN:1:10")
 
 
 def test_login_fail(mock_client):
@@ -430,21 +384,14 @@ def test_login_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation LOGIN failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation LOGIN failed: Unexpected failure")
 
 
 def test_list_accounts(mock_client):
@@ -465,25 +412,17 @@ def test_list_accounts(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
     account_data = expected_response["payload"]["accounts"]
     accounts = [(account["id"], account["username"])
                 for account in account_data]
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            f"LIST_ACCOUNTS:{json.dumps(accounts)}"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        f"LIST_ACCOUNTS:{json.dumps(accounts)}")
 
 
 def test_list_accounts_fail(mock_client):
@@ -500,21 +439,14 @@ def test_list_accounts_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation LIST_ACCOUNTS failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation LIST_ACCOUNTS failed: Unexpected failure")
 
 
 def test_send_message_response(mock_client):
@@ -532,20 +464,12 @@ def test_send_message_response(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("SEND_MESSAGE:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("SEND_MESSAGE:1")
 
 
 def test_send_message_response_fail(mock_client):
@@ -562,21 +486,14 @@ def test_send_message_response_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation SEND_MESSAGE failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation SEND_MESSAGE failed: Unexpected failure")
 
 
 def test_request_messages(mock_client):
@@ -597,25 +514,17 @@ def test_request_messages(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
     message_data = expected_response["payload"]["messages"]
     messages = [(message["id"], message["sender"], message["message"])
                 for message in message_data]
 
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with(
-            f"REQUEST_MESSAGES:{json.dumps(messages)}"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with(
+        f"REQUEST_MESSAGES:{json.dumps(messages)}")
 
 
 def test_request_messages_fail(mock_client):
@@ -632,21 +541,14 @@ def test_request_messages_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+       # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation REQUEST_MESSAGES failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation REQUEST_MESSAGES failed: Unexpected failure")
 
 
 def test_delete_message(mock_client):
@@ -662,20 +564,12 @@ def test_delete_message(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("DELETE_MESSAGES:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("DELETE_MESSAGES:1")
 
 
 def test_delete_message_fail(mock_client):
@@ -692,21 +586,14 @@ def test_delete_message_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation DELETE_MESSAGES failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation DELETE_MESSAGES failed: Unexpected failure")
 
 
 def test_delete_account(mock_client):
@@ -722,20 +609,12 @@ def test_delete_account(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Call the function
-    mock_client.listen_for_messages()
+    mock_client.handle_json_response(expected_response_str)
 
     # Assert message callback was called correctly
-    assert wait_for_condition(
-        lambda: mock_client.message_callback.called_with("DELETE_ACCOUNT:1"),
-        timeout=5
-    ), "Message callback was not called in time."
+    mock_client.message_callback.assert_called_with("DELETE_ACCOUNT:1")
 
 
 def test_delete_account_fail(mock_client):
@@ -752,18 +631,11 @@ def test_delete_account_fail(mock_client):
     }
 
     expected_response_str = json.dumps(expected_response) + '\n'
-    expected_response_bytes = expected_response_str.encode("utf-8")
-
-    # Mock `socket.recv` to return response and then terminate
-    mock_client.socket.recv = MagicMock(
-        side_effect=[expected_response_bytes, b''])
 
     # Patch log_error method to see if it was called
     with patch.object(mock_client, 'log_error') as mock_log_error:
-        mock_client.listen_for_messages()
+        # Call the function
+        mock_client.handle_json_response(expected_response_str)
 
-        assert wait_for_condition(
-            lambda: mock_log_error.called_with(
-                "Operation DELETE_ACCOUNT failed: Unexpected failure"),
-            timeout=5
-        ), "log_error was not called with the expected message."
+        mock_log_error.assert_called_with(
+            "Operation DELETE_ACCOUNT failed: Unexpected failure")
